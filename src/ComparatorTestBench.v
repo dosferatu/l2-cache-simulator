@@ -1,0 +1,2 @@
+module ComparatorTestBench;
+end module
