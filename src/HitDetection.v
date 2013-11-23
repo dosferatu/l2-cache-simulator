@@ -13,6 +13,7 @@
 // Outputs: Hit, Cache line
 
 module HitDetector(
+  clock,
   valid,
   addressTag,
   cacheTag,
@@ -21,6 +22,15 @@ module HitDetector(
   cacheLine
 );
 
+input clock;
+input [7:0] valid;
+input [7:0] addressTag;
+input [7:0] cacheTag;
+input [7:0] cacheData;
+output hit;
+output cacheLine;
+
 //Instantiate 8 to 1 mux here using cache data inputs and comparater select
 //bit inputs.
+
 endmodule

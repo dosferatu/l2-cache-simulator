@@ -14,8 +14,8 @@
 # CHANGE THESE THREE LINES FOR YOUR DESIGN
 #
 #TOOL INPUT
-SRC = Multiplexor.v
-TESTBENCH = MultiplexorTestBench.v
+SRC = L2Cache.v
+TESTBENCH = L2CacheTestBench.v
 TBOUTPUT = waves.vcd	#THIS NEEDS TO MATCH THE OUTPUT FILE
 			#FROM YOUR TESTBENCH
 ###############################################################################
