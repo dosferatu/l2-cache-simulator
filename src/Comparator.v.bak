@@ -4,10 +4,14 @@
 // outputs: match
 //**************************************************
 
-module Comparator(addressTag, cacheTag, match);
-  input[4:0] addressTag;                    // Tag coming from virtual address
-  input[4:0] cacheTag;                      // Tag coming from cache location
-  output reg match;                         // Outputs if they match or not
+module Comparator(
+  addressTag,
+  cacheTag,
+  match
+);
+  input[4:0] addressTag;
+  input[4:0] cacheTag;
+  output reg match;
 
   always @(addressTag or cacheTag)
   begin
