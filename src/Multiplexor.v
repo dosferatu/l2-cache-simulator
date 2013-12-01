@@ -1,6 +1,8 @@
-//8 to 1 multiplexor
-//Inputs: 3 select bits, 8 data inputs
-//Outputs: out
+//**************************************************
+// 8 to 1 multiplexor
+// Inputs: 3 select bits, 8 data inputs
+// Outputs: out
+//**************************************************
 
 module Multiplexor( select, in, out);
   input[2:0] select;

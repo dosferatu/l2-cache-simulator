@@ -1,3 +1,4 @@
+//**************************************************
 // HIT DETECTION
 // Instantiate the 8 to 1 multiplexor using the cache data as the inputs,
 // and wire up the select bits to an AND function of the comparator and the
@@ -11,6 +12,7 @@
 // Inputs: (Cache data, Cache tag, Address tag, Valid bit) all according to
 // cache index
 // Outputs: Hit, Cache line
+//**************************************************
 
 module HitDetector(
   clock,
@@ -30,7 +32,38 @@ input [7:0] cacheData;
 output hit;
 output cacheLine;
 
-//Instantiate 8 to 1 mux here using cache data inputs and comparater select
-//bit inputs.
+wire comparator_out[7:0];
+wire encoder_out[2:0];
+wire mux_out;
 
+// Instantiate our 8 comparators
+module comparator1(addressTag[0], cacheTag[0], comparator_out[0]);
+module comparator2(addressTag[1], cacheTag[1], comparator_out[1]);
+module comparator3(addressTag[2], cacheTag[2], comparator_out[2]);
+module comparator4(addressTag[3], cacheTag[3], comparator_out[3]);
+module comparator5(addressTag[4], cacheTag[4], comparator_out[4]);
+module comparator6(addressTag[5], cacheTag[5], comparator_out[5]);
+module comparator7(addressTag[6], cacheTag[6], comparator_out[6]);
+module comparator8(addressTag[7], cacheTag[7], comparator_out[7]);
+
+// Instantiate our encoder
+module encoder(cacheData, encoder_out);
+
+// Instantiate our multiplexor
+module multiplexor(encoder_out, cacheData, mux_out);
+
+// Propagate changes on clock edge
+always @(clock)
+begin
+  assign hit =  comparator_out[0] and valid[0] or
+                comparator_out[1] and valid[1] or
+                comparator_out[2] and valid[2] or
+                comparator_out[3] and valid[3] or
+                comparator_out[4] and valid[4] or
+                comparator_out[5] and valid[5] or
+                comparator_out[6] and valid[6] or
+                comparator_out[7] and valid[7];
+
+  assign cacheLine = mux_out;
+end
 endmodule
