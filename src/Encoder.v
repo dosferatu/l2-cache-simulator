@@ -1,5 +1,14 @@
 //**************************************************
-// 8 to 3 encoder
+// Parameterized encoder
+//
+// Defaults as 8 to 3 encoder, but can be anything.
+//
+// Input: The width of the input is the value of
+// the "ways" parameter.
+//
+// Output: The select bits are determined by the
+// ceiling of the base 2 log function of the value
+// of the "ways" parameter.
 //**************************************************
 
 module Encoder(in, out);

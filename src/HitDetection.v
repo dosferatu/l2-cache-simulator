@@ -35,7 +35,8 @@ wire mux_out;
 
 // Generate parameter "ways" amount of comparators
 
-// Instantiate our encoder
+// Instantiate our encoder for n ways
+Encoder #(ways) encoder(comparator_out, encoder_out);
 
 // Generate 2^(parameter "dataBits") amount of multiplexors
 

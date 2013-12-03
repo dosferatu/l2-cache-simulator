@@ -1,7 +1,11 @@
 //**************************************************
-// Cache tag comparator:
-// inputs: address tag, cache tag
-// outputs: match
+// Parameterized Cache tag comparator
+//
+// Inputs: Both the address and the cache tag which
+// are the width of the "tagBits" parameter.
+//
+// Output: The output is the AND function of both
+// inputs.
 //**************************************************
 
 module Comparator(addressTag, cacheTag, match);
