@@ -47,9 +47,16 @@ end
 endgenerate
 
 // Instantiate our encoder for n ways
-//Encoder #(ways) encoder(comparator_out, encoder_out);
+// Encoder #(ways) encoder(comparator_out, encoder_out);
 
 // Generate 2^(parameter "dataBits") amount of multiplexors
+generate
+  for (i = 0; i < 2^dataBits; i = i + 1)
+  begin
+    // I don't think this is quite right, but it's a stub for now
+    Multiplexor #(ways)  multiplexor(.select(ENCODER_OUT), .in(), .out(MUX_OUT));
+  end
+endgenerate
 
 // Code such that all (tagBits - 1) comparator outputs and valid
 // bits are ANDed together, and each output/valid pair are logically

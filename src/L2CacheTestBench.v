@@ -1,17 +1,23 @@
+//**************************************************
 // Test bench for the L2 cache
+//**************************************************
 
 module L2CacheTestBench();
-parameter lineSize = 64;
 
-integer file; // File handle for our trace file
-integer line; // Flag used to check for end of file during parsing
+// Configurable params for the architecture used
+parameter commandSize = 8;
+parameter instructionSize = 32;
 
-reg[7:0] command;
-reg[lineSize - 1:0] address;
+// File handle and I/O function return value
+integer file;
+integer line;
+
+// Buffers to store the parsed in command and address
+reg[commandSize - 1:0] command;
+reg[instructionSize - 1:0] address;
 
 initial
 begin
-
   // Open the trace file and start parsing in each line
   file = $fopen("cc1.din", "r");
 
