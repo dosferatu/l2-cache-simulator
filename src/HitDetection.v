@@ -29,14 +29,25 @@ input[(dataBits - 1) * ways:0] cacheData;
 output reg hit;
 output reg[dataBits - 1:0] cacheLine;
 
-wire comparator_out[tagBits - 1:0];
-wire encoder_out[$clog2(ways) - 1:0];
-wire mux_out;
+wire COMPARATOR_OUT;
+
+// This is what I think I want to do, but it does not work
+//wire encoder_out[$clog2(ways) - 1:0];
+wire ENCODER_OUT; // This I believe is wrong, so it's temporary to compile
+wire MUX_OUT;
 
 // Generate parameter "ways" amount of comparators
+genvar i;
+generate
+for (i = 0; i < ways; i = i + 1)
+begin
+  //This works, but it does not select a particular way, so I need to fix
+  //Comparator #(ways) comparator(.addressTag(addressTag), .cacheTag(cacheTag), .match(COMPARATOR_OUT));
+end
+endgenerate
 
 // Instantiate our encoder for n ways
-Encoder #(ways) encoder(comparator_out, encoder_out);
+//Encoder #(ways) encoder(comparator_out, encoder_out);
 
 // Generate 2^(parameter "dataBits") amount of multiplexors
 

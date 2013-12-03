@@ -17,7 +17,7 @@
 module Multiplexor( select, in, out);
 parameter ways = 8;
 
-input[2:0] select;
+input[$clog2(ways) - 1:0] select;
 input[ways - 1:0] in;
 output out;
 

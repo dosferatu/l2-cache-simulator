@@ -15,7 +15,9 @@ module Encoder(in, out);
 parameter ways = 8;
 
 input[ways - 1:0] in;
-output reg[$clog2(ways) - 1:0] out; // Take the base 2 log of the encoder input param
+
+// Take the base 2 log of the encoder input parameter
+output reg[$clog2(ways) - 1:0] out;
 
 always @(in)
 begin
