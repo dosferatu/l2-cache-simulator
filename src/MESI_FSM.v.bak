@@ -4,7 +4,7 @@
  *  by PowerPC to do the same.
  */
 
-module MESI_FSM(COMMAND, STATE_IN, HM, STATE_OUT);
+module cache_FSM(COMMAND, STATE_IN, HM, STATE_OUT);
   
   // Declare input/output types, sizes, and uses
   input       [7:0] COMMAND;              // The command of the currently working operation
