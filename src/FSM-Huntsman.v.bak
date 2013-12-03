@@ -24,15 +24,18 @@ module cache_FSM(COMMAND, STATE_IN, HM, STATE_OUT);
   /*   protocol.  It will take into account the current state and any other necessary input to determine    */
   /*   the next state.                                                                                      */
   /**********************************************************************************************************/
-  
+  initial
+  begin
+    STATE_OUT = INVALID;
+  end
   
   // Gives next state
   always @(STATE_IN,COMMAND,HM)
   begin
     case(STATE_IN)
-      MODIFIED:   if      (COMMAND == 0) STATE_OUT = MODIFIED;
-                  else if (COMMAND == 1) STATE_OUT = MODIFIED;
-                  else if (COMMAND == 2) STATE_OUT = MODIFIED;  // not sure because should not happen?
+      MODIFIED:   if      (COMMAND == 8'b0) STATE_OUT = MODIFIED;
+                  else if (COMMAND == 8'b1) STATE_OUT = MODIFIED;
+                  else if (COMMAND == 8'b10) STATE_OUT = MODIFIED;  // not sure because should not happen?
                   else if (COMMAND == 3) STATE_OUT = MODIFIED;  // not sure because should not happen?
                   else if (COMMAND == 4) STATE_OUT = SHARED;
                   else if (COMMAND == 5) STATE_OUT = MODIFIED;  // not sure because should not happen?
