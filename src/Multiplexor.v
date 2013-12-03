@@ -5,17 +5,18 @@
 //**************************************************
 
 module Multiplexor( select, in, out);
-  input[2:0] select;
-  input[7:0] in;
-  output     out;
+parameter ways = 8;
 
-  reg       out;
-  wire[2:0] select;
-  wire[7:0] in;
+input[2:0] select;
+input[ways - 1:0] in;
+output reg out;
 
-  always @(select or in)
-  begin
-    assign out = in[select];
-  end
+wire[2:0] select;
+wire[ways - 1:0] in;
+
+always @(select or in)
+begin
+  assign out = in[select];
+end
 
 endmodule

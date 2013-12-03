@@ -5,12 +5,11 @@
 //**************************************************
 
 module Comparator(addressTag, cacheTag, match);
-  input[4:0] addressTag;                    // Tag coming from virtual address
-  input[4:0] cacheTag;                      // Tag coming from cache location
-  output reg match;                         // Outputs if they match or not
+parameter tagBits = 10;
 
-  always @(addressTag or cacheTag)
-  begin
-    assign match = addressTag && cacheTag;
-  end
-end module
+input[tagBits - 1:0] addressTag;          // Tag coming from virtual address
+input[tagBits - 1:0] cacheTag;            // Tag coming from cache location
+output match;                             // Outputs if they match or not
+
+assign match = addressTag & cacheTag;
+endmodule
