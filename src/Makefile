@@ -8,9 +8,9 @@
 # 
 ###############################################################################
 #TOOL INPUT
-SRC = L2CacheTestBench.v
+SRC = HitDetection.v
 TESTBENCH = 
-TOPMODULE = L2CacheTestBench
+TOPMODULE = HitDetection.v
 ###############################################################################
 # BE CAREFUL WHEN CHANGING ITEMS BELOW THIS LINE
 ###############################################################################

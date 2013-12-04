@@ -19,17 +19,24 @@ module HitDetector(
 ); 
 
 parameter ways = 8;
-parameter tagBits = 10;
 parameter dataBits = 9; // 64 bytes implies 9 bits needed
+parameter indexBits = 14;
+parameter lineSize = 512; // 64 byte line size
+parameter tagBits = 10;
 
 input[ways - 1:0] valid;
 input[tagBits - 1:0] addressTag;
-input[tagBits - 1:0] cacheTag;
-input[(dataBits - 1) * ways:0] cacheData;
+
+// Since the size of each element is defined we can use a single
+// bus to define all the signals, and just separate according to
+// defined widthssjjkkkkkper channel.
+input[tagBits * ways - 1:0] cacheTag;
+input[dataBits * ways - 1:0] cacheData;
+
 output reg hit;
 output reg[dataBits - 1:0] cacheLine;
 
-wire COMPARATOR_OUT;
+wire[ways - 1:0] COMPARATOR_OUT;
 
 // This is what I think I want to do, but it does not work
 //wire encoder_out[$clog2(ways) - 1:0];
@@ -42,28 +49,21 @@ generate
 for (i = 0; i < ways; i = i + 1)
 begin
   //This works, but it does not select a particular way, so I need to fix
-  //Comparator #(ways) comparator(.addressTag(addressTag), .cacheTag(cacheTag), .match(COMPARATOR_OUT));
+  Comparator #(ways) comparator(.addressTag(addressTag), .cacheTag(cacheTag[i * tagBits + tagBits - 1:i * tagBits]), .match(COMPARATOR_OUT[i]));
 end
 endgenerate
 
 // Instantiate our encoder for n ways
-// Encoder #(ways) encoder(comparator_out, encoder_out);
+Encoder #(ways) encoder(comparator_out, encoder_out);
 
-// Generate 2^(parameter "dataBits") amount of multiplexors
-generate
-  for (i = 0; i < 2^dataBits; i = i + 1)
-  begin
-    // I don't think this is quite right, but it's a stub for now
-    Multiplexor #(ways)  multiplexor(.select(ENCODER_OUT), .in(), .out(MUX_OUT));
-  end
-endgenerate
+// I don't think this is quite right, but it's a stub for now
+Multiplexor #(lineSize, ways)  multiplexor(.select(ENCODER_OUT), .in(cacheData[cacheData]), .out(MUX_OUT));
 
 // Code such that all (tagBits - 1) comparator outputs and valid
 // bits are ANDed together, and each output/valid pair are logically
 // ORed for hit detection
 
-//This is wrong
-//assign hit = comparator_out & valid
-
-//assign cacheLine = mux_out;
+// Output hit and the cache data
+assign hit = comparator_out & valid;
+assign cacheLine = VUX_OUT;
 endmodule

@@ -8,6 +8,12 @@ module L2CacheTestBench();
 parameter commandSize = 8;
 parameter instructionSize = 32;
 
+//Configurable params for the cache implementation
+parameter ways = 8;
+parameter dataBits = 9;
+parameter indexBits = 14;
+parameter tagBits = 10;
+
 // File handle and I/O function return value
 integer file;
 integer line;
@@ -15,6 +21,9 @@ integer line;
 // Buffers to store the parsed in command and address
 reg[commandSize - 1:0] command;
 reg[instructionSize - 1:0] address;
+
+// Instantiate our L2 cache
+L2Cache #(ways, dataBits, indexBits, tagBits) cache(.command(command), .address(address, .snoopBus(), .sharedBus());
 
 initial
 begin

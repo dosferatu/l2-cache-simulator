@@ -15,12 +15,12 @@
 //**************************************************
 
 module Multiplexor( select, in, out);
+parameter lineSize = 512;
 parameter ways = 8;
 
 input[$clog2(ways) - 1:0] select;
-input[ways - 1:0] in;
-output out;
+input[ways * lineSize - 1:0] in;
+output[lineSize - 1:0] out;
 
 assign out = in[select];
-
 endmodule
