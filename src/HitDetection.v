@@ -33,8 +33,8 @@ input[tagBits - 1:0] addressTag;
 input[tagBits * ways - 1:0] cacheTag;
 input[dataBits * ways - 1:0] cacheData;
 
-output reg hit;
-output reg[dataBits - 1:0] cacheLine;
+output hit;
+output[dataBits - 1:0] cacheLine;
 
 wire[ways - 1:0] COMPARATOR_OUT;
 
@@ -65,5 +65,5 @@ Multiplexor #(lineSize, ways)  multiplexor(.select(ENCODER_OUT), .in(cacheData[c
 
 // Output hit and the cache data
 assign hit = comparator_out & valid;
-assign cacheLine = VUX_OUT;
+assign cacheLine = MUX_OUT;
 endmodule
