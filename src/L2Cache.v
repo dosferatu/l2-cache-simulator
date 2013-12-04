@@ -1,3 +1,8 @@
+//**************************************************
+// L2 Cache module
+//
+//**************************************************
+
 module L2Cache(command, address, snoopBus, sharedBus);
 input command;
 input address;

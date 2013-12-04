@@ -2,6 +2,8 @@
 // Test bench for the L2 cache
 //**************************************************
 
+`include "L2Cache.v"
+
 module L2CacheTestBench();
 
 // Configurable params for the architecture used
@@ -10,8 +12,8 @@ parameter instructionSize = 32;
 
 //Configurable params for the cache implementation
 parameter ways = 8;
-parameter dataBits = 9;
 parameter indexBits = 14;
+parameter lineSize = 512;
 parameter tagBits = 10;
 
 // File handle and I/O function return value
@@ -23,7 +25,7 @@ reg[commandSize - 1:0] command;
 reg[instructionSize - 1:0] address;
 
 // Instantiate our L2 cache
-L2Cache #(ways, dataBits, indexBits, tagBits) cache(.command(command), .address(address, .snoopBus(), .sharedBus());
+L2Cache #(ways, indexBits, lineSize, tagBits) cache(.command(command), .address(address, .snoopBus(), .sharedBus());
 
 initial
 begin

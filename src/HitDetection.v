@@ -19,7 +19,6 @@ module HitDetector(
 ); 
 
 parameter ways = 8;
-parameter dataBits = 9; // 64 bytes implies 9 bits needed
 parameter indexBits = 14;
 parameter lineSize = 512; // 64 byte line size
 parameter tagBits = 10;
@@ -31,10 +30,10 @@ input[tagBits - 1:0] addressTag;
 // bus to define all the signals, and just separate according to
 // defined widthssjjkkkkkper channel.
 input[tagBits * ways - 1:0] cacheTag;
-input[dataBits * ways - 1:0] cacheData;
+input[lineSize * ways - 1:0] cacheData;
 
 output hit;
-output[dataBits - 1:0] cacheLine;
+output[lineSize - 1:0] cacheLine;
 
 wire[ways - 1:0] COMPARATOR_OUT;
 
@@ -64,6 +63,7 @@ Multiplexor #(lineSize, ways)  multiplexor(.select(ENCODER_OUT), .in(cacheData[c
 // ORed for hit detection
 
 // Output hit and the cache data
+// Verify this works in the test bench otherwise see above
 assign hit = comparator_out & valid;
 assign cacheLine = MUX_OUT;
 endmodule
