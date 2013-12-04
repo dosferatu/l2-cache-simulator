@@ -20,12 +20,17 @@ reg[tagBits - 1:0] cacheTag;
 reg valid;
 
 always @(write)
-  begin
-    if (write)
-    begin
-      assign data = cacheData;
-      assign tag = cacheTag;
-      valid[index] = 1;
-    else if (!write)
-      //
+begin
+	if (write)
+	begin
+		assign cacheData = data;
+		assign cacheTag = tag;
+		valid[index] = 1;
+		else if (!write)
+		begin
+			assign data = cacheData;
+			assign tag = cacheTag;
+		end
+	end
+end
 endmodule

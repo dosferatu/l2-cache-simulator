@@ -28,7 +28,7 @@ input[tagBits - 1:0] addressTag;
 
 // Since the size of each element is defined we can use a single
 // bus to define all the signals, and just separate according to
-// defined widthssjjkkkkkper channel.
+// defined widths per channel.
 input[tagBits * ways - 1:0] cacheTag;
 input[lineSize * ways - 1:0] cacheData;
 
