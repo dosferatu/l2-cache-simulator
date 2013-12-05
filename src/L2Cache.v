@@ -23,8 +23,10 @@ module L2Cache(command, L1Bus, snoopBus, sharedBus);
   reg data[lineSize - 1:0];
   reg read;
 
-  wire[tagBits - 1:0] CACHETAG;
-  wire[lineSize - 1:0] CACHEDATA;
+  wire[tagBits - 1:0] CACHE_TAG;
+  wire[lineSize - 1:0] CACHE_DATA;
+  wire[lineSize - 1:0] SELECTED_CACHE_DATA;
+  wire HIT;
   wire[3:0] MESI;
 
   /*
@@ -35,8 +37,11 @@ module L2Cache(command, L1Bus, snoopBus, sharedBus);
   */
   
   // Instantiate the cache storage block
-  DataStructureBlock #(indexBits, lineSize, tagBits, ways) Cache(address[indexBits - 1:0], address[tagBits - 1:indexBits], CACHETAG, CACHEDATA, read);
-  
-  // Instantiate the cache output block and wire it to the storage block
-  OutputBlock #(indexBits, lineSize, tagBits, ways) CacheOutput();
-endmodule
+  DataStructureBlock #(indexBits, lineSize, tagBits, ways) Cache(address[indexBits - 1:0], address[tagBits - 1:indexBits], CACHE_TAG, CACHE_DATA, read);
+
+  /*
+  * TIE ALL CACHE DATA OUTPUTS IN TO ONE WIDE CHANNEL TO SEND TO OUTPUT BLOCK
+  */
+ // Instantiate the cache output block and wire it to the storage block
+ OutputBlock #(indexBits, lineSize, tagBits, ways) CacheOutput(MESI[0], addressTag, CACHE_TAG, HIT, SELECTED_CACHE_DATA);
+ endmodule
