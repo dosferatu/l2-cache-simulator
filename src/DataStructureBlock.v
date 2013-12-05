@@ -27,6 +27,25 @@ typedef struct {
   bit[$clog2(ways) - 1:0] lru;
   } set;
 
+task UpdateLRU  (input index[indexBits - 1:0], way[$clog2(ways) - 1:0]);
+  begin
+    // Loop through the set array at row[index]
+    // Store LRU bits for each way
+    // Run LRU logic to update fields given
+    // which way is being read/written to
+  end
+endtask
+
+task QueryLRU (input index[indexBits - 1:0],
+               output way[$clog2(ways) - 1:0]);
+  begin
+    // Loop through the set array at row[index]
+    // Store LRU bits for each way
+    // Return way for which the LRU bits
+    // designate as the oldest.
+  end
+endtask
+
 // Generate n ways using n structs x m sets
 set Storage[$clog2(ways) - 1:0][indexBits - 1:0];
 
