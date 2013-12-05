@@ -10,13 +10,6 @@ parameter lineSize = 512;
 parameter tagBits = 12;
 parameter ways = 8;
 
-typedef struct {
-  bit[tagBits - 1:0] cacheTag;
-  bit[lineSize - 1:0] cacheData;
-  bit[3:0] mesi;
-  bit[$clog2(ways) - 1:0] lru;
-  } set;
-
 input index[indexBits - 1:0];
 input addressTag[tagBits - 1:0];
 input read;
@@ -26,6 +19,13 @@ output cacheTag[tagBits - 1:0];
 
 reg[lineSize - 1:0] cacheData;
 reg[tagBits - 1:0] cacheTag;
+
+typedef struct {
+  bit[tagBits - 1:0] cacheTag;
+  bit[lineSize - 1:0] cacheData;
+  bit[3:0] mesi;
+  bit[$clog2(ways) - 1:0] lru;
+  } set;
 
 // Generate n ways using n structs x m sets
 set Storage[$clog2(ways) - 1:0][indexBits - 1:0];
