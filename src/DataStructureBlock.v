@@ -18,6 +18,8 @@ output cacheTag[tagBits - 1:0];
 
 reg[lineSize - 1:0] cacheData;
 reg[tagBits - 1:0] cacheTag;
+reg[$clog2(ways) - 1:0] selectedWay;
+wire[$clog2(ways) - 1:0] SELECTED_WAY;
 
 typedef struct {
   bit[tagBits - 1:0] cacheTag;
@@ -29,7 +31,7 @@ typedef struct {
 // Generate n ways using n structs x m sets
 set Storage[$clog2(ways) - 1:0][indexBits - 1:0];
 
-always@(index or addressTag or read)
+always@(index, addressTag, read)
 begin
   if (read)
   begin
@@ -40,6 +42,7 @@ begin
   begin
     // read for ownership on shared bus
     // query LRU for way to select
+    QueryLRU(index, SELECTED_WAY);
     // write cache
     // update LRU
   end
