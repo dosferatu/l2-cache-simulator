@@ -1,5 +1,5 @@
 //**************************************************
-// HIT DETECTION
+// OUTPUT BLOCK
 // Inputs: (Cache data, Cache tag, Address tag, Valid bit) all according to
 // cache index
 // Outputs: Hit, Cache line
