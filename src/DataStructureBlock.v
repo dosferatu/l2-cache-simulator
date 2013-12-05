@@ -34,17 +34,17 @@ module DataStructureBlock(index, addressTag, cacheTag, cacheData, read);
   set Storage[$clog2(ways) - 1:0][indexBits - 1:0];
 
   // Performs necessary tasks/functions depending on whether there is a read or right to the cache
-  always@(index, addressTag, read)
+  always@(*)
   begin
     if (read) begin
       // read cache
-      ReadCache(Storage,index,;
+      //ReadCache(Storage,index,;
       // update LRU
     end
     else begin
       // read for ownership on shared bus
       // query LRU for way to select
-      QueryLRU(index, SELECTED_WAY);
+      //QueryLRU(index, SELECTED_WAY);
       // write cache
       // update LRU
     end

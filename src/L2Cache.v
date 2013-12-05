@@ -40,7 +40,7 @@ module L2Cache(command, L1Bus, snoopBus, sharedBus);
   */
   
   // Instantiate the cache storage block
-  DataStructureBlock #(indexBits, lineSize, tagBits, ways) Cache(address[indexBits - 1:0], address[tagBits - 1:indexBits], CACHE_TAG, CACHE_DATA, read);
+  DataStructureBlock #(indexBits, lineSize, tagBits, ways) Cache(L1Bus[indexBits - 1:0], L1Bus[tagBits - 1:indexBits], CACHE_TAG, CACHE_DATA, read);
 
   /*
   * TIE ALL CACHE DATA OUTPUTS IN TO ONE WIDE CHANNEL TO SEND TO OUTPUT BLOCK

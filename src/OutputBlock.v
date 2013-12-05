@@ -9,7 +9,7 @@
 `include "Encoder.v"
 `include "Multiplexor.v"
 
-module HitDetector(
+module OutputBlock(
   valid,
   addressTag,
   cacheTag,
