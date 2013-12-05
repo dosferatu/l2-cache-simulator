@@ -37,9 +37,8 @@ module DataStructureBlock(index, addressTag, cacheTag, cacheData, read);
   always@(index, addressTag, read)
   begin
     if (read) begin
-      // read cache
-      ReadCache(Storage,index,;
-      // update LRU
+    // read cache
+    // update LRU
     end
     else begin
       // read for ownership on shared bus
