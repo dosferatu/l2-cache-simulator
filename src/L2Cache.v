@@ -3,28 +3,37 @@
 //
 //**************************************************
 
+`include "DataStructureBlock.v"
+`include "OutputBlock.v"
+
 module L2Cache(command, address, snoopBus, sharedBus);
+parameter indexBits = 14;
+parameter lineSize = 512;
+parameter tagBits = 12;
+parameter ways = 8;
+
 input command;
-input address;
+input[tagBits + indexBits - 1:0] address;
 output snoopBus;
 output sharedBus;
 
-parameter ways = 8;
-parameter dataBits = 9;
-parameter indexBits = 14;
-parameter tagBits = 10;
+reg data[lineSize - 1:0];
+reg read;
 
-initial
-begin
-  // Instantiate n ways according to defined associativity
-  genvar i;
-  generate
-  for (i = 0; i < ways; i = i + 1)
-  begin
-    //Way #(dataBits, indexBits, tagBits)  way();
-  endgenerate
+wire[tagBits - 1:0] CACHETAG;
+wire[lineSize - 1:0] CACHEDATA;
+wire[3:0] MESI;
 
-  // Wire up the cache output to the generated ways
-  //HitDetection #(ways, dataBits, indexBits, tagBits) cacheOutput();
-end
-end module
+/*
+* The data structure block and output block need to be heavily scrutinized to
+* verity that the proper inputs and outputs are present for any requirements
+* our cache implementation will need including cache coherency protocol.
+* Please change as desired or make note of any needed changes.
+*/
+
+// Instantiate the cache storage block
+DataStructureBlock #(indexBits, lineSize, tagBits, ways) Cache(address[indexBits - 1:0], address[tagBits - 1:indexBits], CACHETAG, CACHEDATA, read);
+
+// Instantiate the cache output block and wire it to the storage block
+OutputBlock #(indexBits, lineSize, tagBits, ways) CacheOutput();
+endmodule

@@ -18,10 +18,10 @@ module HitDetector(
   cacheLine
 ); 
 
-parameter ways = 8;
 parameter indexBits = 14;
 parameter lineSize = 512; // 64 byte line size
-parameter tagBits = 10;
+parameter tagBits = 12;
+parameter ways = 8;
 
 input[ways - 1:0] valid;
 input[tagBits - 1:0] addressTag;

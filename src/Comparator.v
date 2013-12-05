@@ -9,7 +9,7 @@
 //**************************************************
 
 module Comparator(addressTag, cacheTag, match);
-parameter tagBits = 10;
+parameter tagBits = 12;
 
 input[tagBits - 1:0] addressTag;
 input[tagBits - 1:0] cacheTag;

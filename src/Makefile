@@ -8,9 +8,9 @@
 # 
 ###############################################################################
 #TOOL INPUT
-SRC = HitDetection.v
-TESTBENCH = 
-TOPMODULE = HitDetection.v
+SRC = L2Cache.v
+TESTBENCH = L2CacheTestBench.v
+TOPMODULE = L2CacheTestBench
 ###############################################################################
 # BE CAREFUL WHEN CHANGING ITEMS BELOW THIS LINE
 ###############################################################################
@@ -18,12 +18,13 @@ TOPMODULE = HitDetection.v
 COMPILER = vlog
 SIMULATOR = vsim
 #TOOL OPTIONS
+CFLAGS = -sv
 SFLAGS = -c
 SOPTIONS = -do 'run -all'
 ###############################################################################
 #MAKE DIRECTIVES
 check : $(TESTBENCH) $(SRC)
-	$(COMPILER) $(SRC)
+	$(COMPILER) $(CFLAGS) $(SRC)
 
 simulate: $(COUTPUT)
 	$(SIMULATOR) $(SFLAGS) $(TOPMODULE) $(SOPTIONS)
