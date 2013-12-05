@@ -97,6 +97,6 @@ endtask
   /*
   * TIE ALL CACHE DATA OUTPUTS IN TO ONE WIDE CHANNEL TO SEND TO OUTPUT BLOCK
   */
- // Instantiate the cache output block and wire it to the storage block
- OutputBlock #(indexBits, lineSize, tagBits, ways) CacheOutput(MESI[0], addressTag, CACHE_TAG, HIT, SELECTED_CACHE_DATA);
- endmodule
+  // Instantiate the cache output block and wire it to the storage block
+  OutputBlock #(indexBits, lineSize, tagBits, ways) CacheOutput(MESI[0], addressTag, CACHE_TAG, HIT, SELECTED_CACHE_DATA);
+endmodule
