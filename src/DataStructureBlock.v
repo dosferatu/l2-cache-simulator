@@ -28,7 +28,7 @@ reg[lineSize - 1:0] cacheData;
 reg[tagBits - 1:0] cacheTag;
 
 // Generate n ways using n structs x m sets
-set Storage[ways - 1:0][(2**indexBits) - 1:0];
+set Storage[$clog2(ways) - 1:0][indexBits - 1:0];
 
 always@(index or addressTag or read)
 begin
