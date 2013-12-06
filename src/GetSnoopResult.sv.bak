@@ -9,5 +9,11 @@ module GetSnoopResult(address,operation,snoopBus);
   
   // Perform a consistant procedure
   always @(address,operation) begin
-    if(address[3:0] == 2 || address [3:0] == 8)
-      snoopBus = 3'b10
+    if(address[3:0] == 4'h2 || address [3:0] == 4'h8)
+      snoopBus = 2'b01;
+    else if(address[3:0] == 4'h4 || address[3:0] == 4'hC)
+      snoopBus = 2'b10;
+    else
+      snoopBus = 2'b00;
+  end
+endmodule
