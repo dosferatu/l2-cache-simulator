@@ -15,3 +15,10 @@
 0 004321DC #0.b.ii
 0 004321DC #0.a.iii
 3 004321DC #3.c.i
+0 18D2A4E #0.b.ii
+0 2431ADC #0.b.iii
+4 18D2A4E #4.a.ii
+4 2431ADC #4.a.iii
+0 2431ADC #0.b.ii
+1 2431ADC #1.a.iii
+4 2431ADC #4.a.i
