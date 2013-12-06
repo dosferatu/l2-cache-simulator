@@ -8,8 +8,8 @@
 # 
 ###############################################################################
 #TOOL INPUT
-SRC = L2Cache.v
-TESTBENCH = L2CacheTestBench.v
+SRC = L2Cache.sv
+TESTBENCH = L2CacheTestBench.sv
 TOPMODULE = L2CacheTestBench
 ###############################################################################
 # BE CAREFUL WHEN CHANGING ITEMS BELOW THIS LINE
@@ -18,7 +18,7 @@ TOPMODULE = L2CacheTestBench
 COMPILER = vlog
 SIMULATOR = vsim
 #TOOL OPTIONS
-CFLAGS = -sv
+CFLAGS = 
 SFLAGS = -c
 SOPTIONS = -do 'run -all'
 ###############################################################################
