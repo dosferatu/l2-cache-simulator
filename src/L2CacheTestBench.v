@@ -27,17 +27,18 @@ module L2CacheTestBench();
   // Wires to connect the cache and other modules to check operation of cache model
   wire [lineSize - 1:0]   sharedBus;
   wire [255:0]            L1Bus
-  wire [7:0]              operationBus;
+  wire [7:0]              L1OperationBus;
+  wire [7:0]              sharedOperationBus;
   wire [1:0]              snoopBus;
 
   // Instantiate our L2 cache
-  L2Cache #(ways, indexBits, lineSize, tagBits) cache(.command(command), .L1Bus(L1Bus), .snoopBus(snoopBus), .sharedBus(sharedBus), .operationBus(operationBus));
+  L2Cache #(ways, indexBits, lineSize, tagBits) cache(.L1Bus(L1Bus), .snoopBus(snoopBus), .sharedBus(sharedBus), .L1OperationBus(L1OperationBus), .sharedOperationBus(sharedOperationBus));
 
   // Instantiate GetSnoopResult
-  GetSnoopResult #(addressSize) snoop(.sharedBus(sharedAddress), .operation
+  GetSnoopResult #(addressSize) snoop(.sharedBus(sharedBus), .sharedOperationBus(sharedOperationBus));
   
   // Instantiate fileIO module
-  FileIO #(addressSize) IO(.L1Bus(L1Bus), .sharedBus(sharedBus), .operationBus(operationBus));
+  FileIO #(addressSize) IO(.L1Bus(L1Bus), .sharedBus(sharedBus), .L1OperationBus(L1OperationBus), .sharedoperationBus(sharedOperationBus));
   
 endmodule
 
