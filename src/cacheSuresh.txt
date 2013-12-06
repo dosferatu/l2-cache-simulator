@@ -1,0 +1,8 @@
+// 
+// code for cache ways
+//
+module cache(index,tag,data,valid,bs)
+input index[13:0]tag[11:0]bs[5:0] // as memories are arrays of registers (16384 deep with bs and tag wide
+output valid);
+output data[9:0] // because total of 64 bytes is for data which is 2^6 * 2^3 = 2^9 so we need 9 bits for representing the data
+// do we need to implement LRU counter in over here ??
