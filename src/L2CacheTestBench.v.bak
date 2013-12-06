@@ -35,20 +35,16 @@ integer line;
 reg   [commandSize - 1:0] command;
 wire  [addressSize - 1:0] L1address;
 wire  [addressSize - 1:0] sharedAddress;
-
+wire  [1:0] snoopBus;
 
 // Wires to connect the cache to the the GetSnoopResult module
-wire [7:0]  operationBus;
-wire [1:0]  snoopBus;
+wire [7:0] operationBus;
 
 // Instantiate our L2 cache
 L2Cache #(ways, indexBits, lineSize, tagBits) cache(.command(command), .L1Bus(L1address), .snoopBus(), .sharedBus(sharedAddress), .operationBus(operationBus));
 
 // Instantiate GetSnoopResult
-GetSnoopResult #(addressSize) snoop(.sharedBus(sharedAddress), .operation
-
-module fileIO(L1address,sharedAdress,operationBus);
-  output [addressSize - 1]L1address;
+GetSnoopResult #(addressSize) snoop(.sharedBus(
 
 initial
 begin
