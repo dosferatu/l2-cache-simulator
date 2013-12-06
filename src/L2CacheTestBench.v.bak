@@ -32,7 +32,7 @@ module L2CacheTestBench();
   wire [1:0]              snoopBus;
 
   // Instantiate our L2 cache
-  L2Cache #(ways, indexBits, lineSize, tagBits) cache(.command(command), .L1Bus(L1Bus), .snoopBus(snoopBus), .sharedBus(sharedBus), .L1OperationBus(L1OperationBus), .sharedOperationBus(sharedOperationBus));
+  L2Cache #(ways, indexBits, lineSize, tagBits) cache(.L1Bus(L1Bus), .snoopBus(snoopBus), .sharedBus(sharedBus), .L1OperationBus(L1OperationBus), .sharedOperationBus(sharedOperationBus), .hit(hit), .miss(miss), .read(read), .write(write));
 
   // Instantiate GetSnoopResult
   GetSnoopResult #(addressSize) snoop(.sharedBus(sharedBus), .sharedOperationBus(sharedOperationBus));

@@ -1,19 +1,21 @@
-module FileIO(L1Bus_Out,sharedBus,operationBus);
+module FileIO(L1Bus,sharedBus,L1OperationBus,sharedOperationBus);
   // Establish parameters for configurability
   parameter addressSize     = 32;
   parameter commandSize     = 32;
   
   // Define inputs and outputs
-  inout logic [255:0]   L1Bus_;
+  inout logic [255:0]   L1Bus;
   inout logic [511:0]   sharedBus;
-  inout logic [7:0]     operationBus;
+  inout logic [7:0]     L1OperationBus;
+  inout logic [7:0]     sharedOperationBus;
   
   // File handle and I/O function return value
   integer file;
   integer line;
   reg [255:0] L1Address;
   reg [511:0] sharedAddress;
-  reg [7:0]   operation;
+  reg [7:0]   L1Operation;
+  reg [7:0]   sharedOperation;
 
   // Buffers to store the parsed in command and address
   reg   [commandSize - 1:0]   command;
@@ -21,7 +23,8 @@ module FileIO(L1Bus_Out,sharedBus,operationBus);
   
   assign L1Bus = L1Address;
   assign sharedBus = sharedAddress;
-  assign operationBus = operation;
+  assign L1OperationBus = L1Operation;
+  assign sharedOperationBus = sharedOperation;
   
   
   // Begin File IO -> Bus procedure
@@ -40,43 +43,43 @@ module FileIO(L1Bus_Out,sharedBus,operationBus);
               // L1 data cache read request
               $display("L1 data cache read request to address %h", address);
               L1Address <= address;
-              operation <= "R";
+              L1Operation <= "R";
             end
         1:  begin
               // L1 data cache write request
               $display("L1 data cache write request to address %h", address);
               L1Address <= address;
-              operation <= "W";
+              L1Operation <= "W";
             end
         2:  begin
               // L1 instruction cache read request
               $display("L1 instruction cache read request to address %h", address);
               L1Address <= address;
-              operation <= "R";
+              L1Operation <= "R";
             end  
         3:  begin
               // Snooped invalidate command
               $display("Snooped invalidate command to address %h", address);
               sharedAddress <= address;
-              operation <= "I";
+              sharedOperation <= "I";
             end
         4:  begin
               // Snooped read request
               $display("Snooped read request to address %h", address);
               sharedAddress <= address;
-              operation <= "R";
+              sharedOperation <= "R";
             end
         5:  begin
               // Snooped write request
               $display("Snooped write request to address %h", address);
               sharedAddress <= address;
-              operation <= "W";
+              sharedOperation <= "W";
             end
         6:  begin
               // Snooped read with intent to modify
               $display("Snooped read with intent to modify to address %h", address);
               sharedAddress <= address;
-              operation <= "M";
+              sharedOperation <= "M";
             end
         8:  begin
               // Clear cache & reset all states
@@ -90,5 +93,4 @@ module FileIO(L1Bus_Out,sharedBus,operationBus);
       endcase
     end
 endmodule
-
 
