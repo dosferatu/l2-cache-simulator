@@ -5,12 +5,14 @@
 `include "L2Cache.v"
 
 module L2CacheTestBench();
-
+  // Setup param for use in turning statistics on and off
+  parameter stats = 1;
+  
   // Configurable params for the architecture used
   parameter commandSize = 8;
   parameter addressSize = 32;
   
-  //Configurable params for the cache implementation
+  // Configurable params for the cache implementation
   parameter ways        = 8;
   parameter sets        = 16384;
   parameter lineSize    = 512;
@@ -61,7 +63,10 @@ module L2CacheTestBench();
   end
   
   initial begin
-    $display("HIT     MISS      READ      WRITE       RATIO");
-    $monitor("%d      %d        %d        %d        %d", HIT, MISS, READ, WRITE, HIT/MISS);
+    if(stats == 1) begin
+      $display("HIT     MISS      READ      WRITE       RATIO");
+      $monitor("%d      %d        %d        %d        %d", HIT, MISS, READ, WRITE, HIT/MISS);
+    end
+  end
 endmodule
 

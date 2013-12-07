@@ -21,9 +21,11 @@ module FileIO(L1Bus,sharedBus,L1OperationBus,sharedOperationBus);
   reg   [commandSize - 1:0]   command;
   reg   [addressSize - 1:0]   address;
   
-  assign L1Bus = L1Address;
-  assign sharedBus = sharedAddress;
-  assign L1OperationBus = L1Operation;
+  
+  // Assignments for working the bidirection ports
+  assign L1Bus              = L1Address;
+  assign sharedBus          = sharedAddress;
+  assign L1OperationBus     = L1Operation;
   assign sharedOperationBus = sharedOperation;
   
   

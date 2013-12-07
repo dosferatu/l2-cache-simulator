@@ -44,43 +44,43 @@ module FileIO(L1Bus,sharedBus,L1OperationBus,sharedOperationBus);
         0:  begin
               // L1 data cache read request
               $display("L1 data cache read request to address %h", address);
-              L1Address <= address;
+              L1Address   <= address;
               L1Operation <= "R";
             end
         1:  begin
               // L1 data cache write request
               $display("L1 data cache write request to address %h", address);
-              L1Address <= address;
+              L1Address   <= address;
               L1Operation <= "W";
             end
         2:  begin
               // L1 instruction cache read request
               $display("L1 instruction cache read request to address %h", address);
-              L1Address <= address;
+              L1Address   <= address;
               L1Operation <= "R";
             end  
         3:  begin
               // Snooped invalidate command
               $display("Snooped invalidate command to address %h", address);
-              sharedAddress <= address;
+              sharedAddress   <= address;
               sharedOperation <= "I";
             end
         4:  begin
               // Snooped read request
               $display("Snooped read request to address %h", address);
-              sharedAddress <= address;
+              sharedAddress   <= address;
               sharedOperation <= "R";
             end
         5:  begin
               // Snooped write request
               $display("Snooped write request to address %h", address);
-              sharedAddress <= address;
+              sharedAddress   <= address;
               sharedOperation <= "W";
             end
         6:  begin
               // Snooped read with intent to modify
               $display("Snooped read with intent to modify to address %h", address);
-              sharedAddress <= address;
+              sharedAddress   <= address;
               sharedOperation <= "M";
             end
         8:  begin
