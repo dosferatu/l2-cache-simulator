@@ -59,5 +59,9 @@ module L2CacheTestBench();
     else
       WRITE = WRITE + 1;
   end
+  
+  initial begin
+    $display("HIT     MISS      READ      WRITE       RATIO");
+    $monitor("%d      %d        %d        %d        %d", HIT, MISS, READ, WRITE, HIT/MISS);
 endmodule
 

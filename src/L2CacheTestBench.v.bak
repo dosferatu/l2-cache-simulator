@@ -30,6 +30,14 @@ module L2CacheTestBench();
   wire [7:0]              L1OperationBus;
   wire [7:0]              sharedOperationBus;
   wire [1:0]              snoopBus;
+  
+  // Stuff for statistics
+  wire hit, miss, read, write;
+  integer HIT, MISS, READ, WRITE;
+  initial begin
+    HIT = 0; MISS = 0; READ = 0; WRITE = 0;
+  end
+  
 
   // Instantiate our L2 cache
   L2Cache #(ways, indexBits, lineSize, tagBits) cache(.L1Bus(L1Bus), .snoopBus(snoopBus), .sharedBus(sharedBus), .L1OperationBus(L1OperationBus), .sharedOperationBus(sharedOperationBus), .hit(hit), .miss(miss), .read(read), .write(write));
@@ -40,5 +48,16 @@ module L2CacheTestBench();
   // Instantiate fileIO module
   FileIO #(addressSize) IO(.L1Bus(L1Bus), .sharedBus(sharedBus), .L1OperationBus(L1OperationBus), .sharedoperationBus(sharedOperationBus));
   
+  // Take statistics
+  always @(hit,miss,read,write) begin
+    if(hit)
+      HIT = HIT + 1;
+    else if(miss)
+      MISS = MISS + 1;
+    else if(read)
+      READ = READ + 1;
+    else
+      WRITE = WRITE + 1;
+  end
 endmodule
 

@@ -14,10 +14,10 @@ module L2Cache(command, L1Bus, operationBus, snoopBus, sharedBus, hit, miss, rea
   parameter tagBits   = 12;   // Number of bits from the address used for tag for validating index
   parameter lineSize  = 512;  // Size of the line of data in a set and used for shared bus size
   parameter L1BusSize = 256;  // Size of Bus to communicate with the L1
-  parameter R         = 82;   // Read operation
-  parameter W         = 87;   // Write operation
-  parameter M         = 77;   // Modify operation
-  parameter I         = 73;   // Invalidate operation
+  parameter R         = "R";   // Read operation
+  parameter W         = "W";   // Write operation
+  parameter M         = "M";   // Modify operation
+  parameter I         = "I";   // Invalidate operation
 
   // Declare inputs and outputs
   input   [7:0]             command;      // This will bring in the command operation from the trace file
@@ -26,13 +26,15 @@ module L2Cache(command, L1Bus, operationBus, snoopBus, sharedBus, hit, miss, rea
   inout   [1:0]             snoopBus;     // Bus for getting/putting snoops
   inout   [lineSize - 1:0]  sharedBus;    // FSB used by other processors and DRAM
 
+  // Establish wires/registers for use by the module
   reg[tagBits - 1:0]        addressTag;   // Current operation's tag from address
   reg[indexBits - 1:0]      index;        // Current operation's index from address
   reg[$clog2(ways) - 1:0]   selectedWay;  // Current operation's selected way according to LRU
   reg[lineSize - 1:0]       data;         // This will be used for holding data (in this case MESI bits) from cache to give it to
-                                          // output the necessary output for according the MESI protocol and the operation command
-                                          // received from the bus
-
+                                          //  output the necessary output for according the MESI protocol and the operation command
+                                          //  received from the bus
+  
+  
   wire[tagBits - 1:0]       CACHE_TAG;            // Current operation's tag from cache according to cache walk
   wire[lineSize - 1:0]      CACHE_DATA;           // Current operation's data (MESI bits) according to cache walk
   wire[$clog2(ways) - 1:0]  COMPARATOR_OUT;       
@@ -77,8 +79,8 @@ module L2Cache(command, L1Bus, operationBus, snoopBus, sharedBus, hit, miss, rea
       automatic bit[indexBits - 1:0] Index;
       automatic integer i, j;
 
-      // Array to store the LRU bits from each way
-      reg[$clog2(ways) - 1:0][$clog2(ways) - 1:0] LRUbits;
+      // Array to store the LRU bits from each way (LRU = 3 bits per x ways)
+      reg[$clog2(ways) - 1:0][2:0] LRUbits;
 
       // Assign unpacked index input to our word using
       // the streaming operator
