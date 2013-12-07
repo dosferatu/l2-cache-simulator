@@ -2,7 +2,7 @@
 // Test bench for the L2 cache
 //**************************************************
 
-`include "L2Cache.v"
+`include "L2Cache.sv"
 
 module L2CacheTestBench();
   // Setup param for use in turning statistics on and off

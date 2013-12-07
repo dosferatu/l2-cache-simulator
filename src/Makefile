@@ -18,7 +18,7 @@ TOPMODULE = L2CacheTestBench
 COMPILER = vlog
 SIMULATOR = vsim
 #TOOL OPTIONS
-CFLAGS = -source
+CFLAGS = 
 SFLAGS = -c
 SOPTIONS = -do 'run -all'
 ###############################################################################
