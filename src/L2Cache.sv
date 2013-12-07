@@ -9,11 +9,12 @@
 
 module L2Cache(command, L1Bus, operationBus, snoopBus, sharedBus, hit, miss, read, write);
   // Establish parameters that can be used for dynamic sizing of cache
-  parameter ways      = 8;    // Number of ways for set associativity
+  parameter byteSelect= 6;    // Number of byte select bits according to line size
   parameter indexBits = 14;   // Number of bits from the address used for indexing to a set in way
-  parameter tagBits   = 12;   // Number of bits from the address used for tag for validating index
   parameter lineSize  = 512;  // Size of the line of data in a set and used for shared bus size
   parameter L1BusSize = 256;  // Size of Bus to communicate with the L1
+  parameter tagBits   = 12;   // Number of bits from the address used for tag for validating index
+  parameter ways      = 8;    // Number of ways for set associativity
   parameter R         = "R";   // Read operation
   parameter W         = "W";   // Write operation
   parameter M         = "M";   // Modify operation
@@ -25,6 +26,11 @@ module L2Cache(command, L1Bus, operationBus, snoopBus, sharedBus, hit, miss, rea
   inout   [7:0]             operationBus; // Bus used to designate read/write/modify/invalidate
   inout   [1:0]             snoopBus;     // Bus for getting/putting snoops
   inout   [lineSize - 1:0]  sharedBus;    // FSB used by other processors and DRAM
+
+  output hit;
+  output miss;
+  output read;
+  output write;
 
   // Establish wires/registers for use by the module
   reg[tagBits - 1:0]        addressTag;   // Current operation's tag from address
@@ -109,18 +115,24 @@ module L2Cache(command, L1Bus, operationBus, snoopBus, sharedBus, hit, miss, rea
   // Instantiate the cache output block and wire it to the storage block
   //OutputBlock #(indexBits, lineSize, tagBits, ways) CacheOutput(MESI[0], addressTag, CACHE_TAG, HIT, SELECTED_CACHE_DATA);
   // Generate parameter "ways" amount of comparators
+  wire[ways * lineSize - 1:0] CACHE_DATA_OUT;
   genvar i;
   generate
     for (i = 0; i < ways; i = i + 1)
       //This works, but it does not select a particular way, so I need to fix
-      Comparator #(ways) comparator(.addressTag(addressTag), .cacheTag(CACHE_TAG[i * tagBits + tagBits - 1:i * tagBits]), .match(COMPARATOR_OUT[i]));
+      //Comparator #(ways) comparator(.addressTag(addressTag), .cacheTag(CACHE_TAG[i * tagBits + tagBits - 1:i * tagBits]), .match(COMPARATOR_OUT[i]));
+      Comparator #(ways) comparator(.addressTag(addressTag), .cacheTag(Storage[i][L1Bus[byteSelect + indexBits - 1:0]].cacheTag), .match(COMPARATOR_OUT[i]));
   endgenerate
 
   // Instantiate our encoder for n ways
-  Encoder #(ways) encoder(comparator_out, encoder_out);
+  Encoder #(ways) encoder(COMPARATOR_OUT, ENCODER_OUT);
 
+  //wire[(ways * linesize) - 1:0]  CACHE_TAG_OUT = {
+
+  
+  CACH_DATA_OUT[(i + 1) * lineSize] = Storage[i][L1Bus[byteSelect + indexBits - 1:0]].cacheTag;
   // I don't think this is quite right, but it's a stub for now
-  Multiplexor #(lineSize, ways)  multiplexor(.select(ENCODER_OUT), .in(cacheData[cacheData]), .out(MUX_OUT));
+  Multiplexor #(lineSize, ways)  multiplexor(.select(ENCODER_OUT), .in(CACHE_DATA_OUT), .out(MUX_OUT));
 
   // Code such that all (tagBits - 1) comparator outputs and valid
   // bits are ANDed together, and each output/valid pair are logically
@@ -128,7 +140,7 @@ module L2Cache(command, L1Bus, operationBus, snoopBus, sharedBus, hit, miss, rea
   // Output hit, cache data, and selected way.
   // Verify this works in the test bench otherwise see above
   //assign hit = comparator_out & valid;
-  assign cacheLine = MUX_OUT;
+  cacheLine = MUX_OUT;
 
   // Performs necessary tasks/functions depending on whether there is a read or right to the cache
   always@(*) begin
@@ -148,4 +160,4 @@ module L2Cache(command, L1Bus, operationBus, snoopBus, sharedBus, hit, miss, rea
       UpdateLRU;
     end
   end
-endmodule
+  endmodule

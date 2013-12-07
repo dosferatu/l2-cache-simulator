@@ -22,5 +22,5 @@ input[$clog2(ways) - 1:0] select;
 input[ways * lineSize - 1:0] in;
 output[lineSize - 1:0] out;
 
-assign out = in[select];
+assign out = in[select * ways * lineSize];
 endmodule
