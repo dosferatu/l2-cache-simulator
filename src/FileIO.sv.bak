@@ -1,6 +1,5 @@
 module FileIO(L1Bus,sharedBus,L1OperationBus,sharedOperationBus);
   // Establish parameters for configurability
-  parameter stats           = 1;
   parameter addressSize     = 32;
   parameter commandSize     = 32;
   
@@ -41,7 +40,6 @@ module FileIO(L1Bus,sharedBus,L1OperationBus,sharedOperationBus);
   end
 
     always @(command) begin
-      if(stats == 1)
       case(command)
         0:  begin
               // L1 data cache read request
