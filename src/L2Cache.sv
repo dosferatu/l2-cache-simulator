@@ -44,7 +44,7 @@ module L2Cache(command, L1Bus, operationBus, snoopBus, sharedBus, hit, miss, rea
   wire[tagBits - 1:0]       CACHE_TAG;            // Current operation's tag from cache according to cache walk
   wire[lineSize - 1:0]      CACHE_DATA;           // Current operation's data (MESI bits) according to cache walk
   wire[$clog2(ways) - 1:0]  COMPARATOR_OUT;       
-  wire[lineSize - 1:0]      SELECTED_CACHE_DATA;
+  wire[ways * lineSize - 1:0] CACHE_DATA_OUT;
   wire HIT;
   wire[3:0] MESI;
 
@@ -56,8 +56,6 @@ module L2Cache(command, L1Bus, operationBus, snoopBus, sharedBus, hit, miss, rea
     bit[$clog2(ways) - 1:0] lru;
   } line;
 
-  // Generate n ways using n structs x m sets
-  line Storage[$clog2(ways) - 1:0][indexBits - 1:0];
 
 // Loop through the set array at row[index]
 // Set the way to the least recently used column
@@ -109,38 +107,30 @@ module L2Cache(command, L1Bus, operationBus, snoopBus, sharedBus, hit, miss, rea
     end
   endtask
 
-  /*
-  * TIE ALL CACHE DATA OUTPUTS IN TO ONE WIDE CHANNEL TO SEND TO OUTPUT BLOCK
-  */
-  // Instantiate the cache output block and wire it to the storage block
-  //OutputBlock #(indexBits, lineSize, tagBits, ways) CacheOutput(MESI[0], addressTag, CACHE_TAG, HIT, SELECTED_CACHE_DATA);
-  // Generate parameter "ways" amount of comparators
-  wire[ways * lineSize - 1:0] CACHE_DATA_OUT;
-  genvar i;
-  generate
+  initial begin
+    automatic integer i;
+
+    // Generate n ways using n structs x m sets
+    line Storage[$clog2(ways) - 1:0][indexBits - 1:0];
+
     for (i = 0; i < ways; i = i + 1)
-      //This works, but it does not select a particular way, so I need to fix
-      //Comparator #(ways) comparator(.addressTag(addressTag), .cacheTag(CACHE_TAG[i * tagBits + tagBits - 1:i * tagBits]), .match(COMPARATOR_OUT[i]));
-      Comparator #(ways) comparator(.addressTag(addressTag), .cacheTag(Storage[i][L1Bus[byteSelect + indexBits - 1:0]].cacheTag), .match(COMPARATOR_OUT[i]));
-  endgenerate
+      CACH_DATA_OUT[(i + 1) * lineSize] = Storage[i][L1Bus[byteSelect + indexBits - 1:0]].cacheTag;
 
-  // Instantiate our encoder for n ways
-  Encoder #(ways) encoder(COMPARATOR_OUT, ENCODER_OUT);
+    // Generate parameter "ways" amount of comparators
+    genvar i;
+    generate
+    for (i = 0; i < ways; i = i + 1)
+      Comparator #(ways) comparator(addressTag, Storage[i][L1Bus[byteSelect + indexBits - 1:0]].cacheTag, COMPARATOR_OUT[i]);
+    endgenerate
 
-  //wire[(ways * linesize) - 1:0]  CACHE_TAG_OUT = {
+    // Instantiate our encoder for n ways
+    Encoder #(ways) encoder(COMPARATOR_OUT, ENCODER_OUT);
 
-  
-  CACH_DATA_OUT[(i + 1) * lineSize] = Storage[i][L1Bus[byteSelect + indexBits - 1:0]].cacheTag;
-  // I don't think this is quite right, but it's a stub for now
-  Multiplexor #(lineSize, ways)  multiplexor(.select(ENCODER_OUT), .in(CACHE_DATA_OUT), .out(MUX_OUT));
+    Multiplexor #(lineSize, ways)  multiplexor(ENCODER_OUT, CACHE_DATA_OUT, MUX_OUT);
 
-  // Code such that all (tagBits - 1) comparator outputs and valid
-  // bits are ANDed together, and each output/valid pair are logically
-  // ORed for hit detection
-  // Output hit, cache data, and selected way.
-  // Verify this works in the test bench otherwise see above
-  //assign hit = comparator_out & valid;
-  cacheLine = MUX_OUT;
+    assign hit = comparator_out & valid;
+    assign cacheLine = MUX_OUT;
+  end
 
   // Performs necessary tasks/functions depending on whether there is a read or right to the cache
   always@(*) begin
