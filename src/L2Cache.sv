@@ -55,8 +55,7 @@ module L2Cache(command, L1Bus, operationBus, snoopBus, sharedBus, hit, miss, rea
 
 // Loop through the set array at row[index]
 // Set the way to the least recently used column
-  task QueryLRU;
-    begin
+  task QueryLRU; begin
       automatic integer LRUvalue = 0;
       automatic bit[indexBits - 1:0] Index;
       automatic integer i;
@@ -65,17 +64,17 @@ module L2Cache(command, L1Bus, operationBus, snoopBus, sharedBus, hit, miss, rea
       // the streaming operator
       {>>{Index}} = index;
 
+      // Loop through each way to find which way is LRU
+      //  i is used to keep track of the current way during the loop
       for (i = 0;i < ways; i = i + 1)
-        if (Storage[i][Index].lru > LRUvalue)
-        begin
+        if (Storage[i][Index].lru > LRUvalue) begin
           LRUvalue = Storage[i][Index].lru;
           selectedWay = i;
         end
       end
   endtask
 
-  task UpdateLRU;
-    begin
+  task UpdateLRU; begin
       automatic bit[indexBits - 1:0] Index;
       automatic integer i, j;
 
@@ -132,8 +131,7 @@ module L2Cache(command, L1Bus, operationBus, snoopBus, sharedBus, hit, miss, rea
   assign cacheLine = MUX_OUT;
 
   // Performs necessary tasks/functions depending on whether there is a read or right to the cache
-  always@(*)
-  begin
+  always@(*) begin
     if (operationBus == R) begin
       // read cache
       //ReadCache(Storage,index,;

@@ -65,6 +65,8 @@ module L2Cache(command, L1Bus, operationBus, snoopBus, sharedBus, hit, miss, rea
       // the streaming operator
       {>>{Index}} = index;
 
+      // Loop through each way to find which way is LRU
+      //  i is used to keep track of the current way during the loop
       for (i = 0;i < ways; i = i + 1)
         if (Storage[i][Index].lru > LRUvalue)
         begin
@@ -79,7 +81,7 @@ module L2Cache(command, L1Bus, operationBus, snoopBus, sharedBus, hit, miss, rea
       automatic bit[indexBits - 1:0] Index;
       automatic integer i, j;
 
-      // Array to store the LRU bits from each way (LRU = 3 bits and there are x ways)
+      // Array to store the LRU bits from each way (LRU = 3 bits per x ways)
       reg[$clog2(ways) - 1:0][2:0] LRUbits;
 
       // Assign unpacked index input to our word using
