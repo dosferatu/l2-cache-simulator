@@ -114,7 +114,8 @@ module L2Cache(command, L1Bus, operationBus, snoopBus, sharedBus, hit, miss, rea
     line Storage[$clog2(ways) - 1:0][indexBits - 1:0];
 
     for (i = 0; i < ways; i = i + 1)
-      CACH_DATA_OUT[(i + 1) * lineSize] = Storage[i][L1Bus[byteSelect + indexBits - 1:0]].cacheTag;
+      CACHE_DATA_OUT[(i + 1) * lineSize] = Storage[i][L1Bus[byteSelect + indexBits - 1:0]].cacheTag;
+  end
 
     // Generate parameter "ways" amount of comparators
     genvar i;
@@ -128,9 +129,8 @@ module L2Cache(command, L1Bus, operationBus, snoopBus, sharedBus, hit, miss, rea
 
     Multiplexor #(lineSize, ways)  multiplexor(ENCODER_OUT, CACHE_DATA_OUT, MUX_OUT);
 
-    assign hit = comparator_out & valid;
+    //assign hit = comparator_out & valid;
     assign cacheLine = MUX_OUT;
-  end
 
   // Performs necessary tasks/functions depending on whether there is a read or right to the cache
   always@(*) begin
