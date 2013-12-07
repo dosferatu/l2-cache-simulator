@@ -1,0 +1,8 @@
+{D:/485 Repo/src/FSM-Huntsman.v} {1 {vlog -work work {D:/485 Repo/src/FSM-Huntsman.v}
+Model Technology ModelSim ALTERA vlog 10.1b Compiler 2012.04 Apr 27 2012
+-- Compiling module cache_FSM
+
+Top level modules:
+	cache_FSM
+
+} {} {}}

@@ -1,0 +1,8 @@
+{D:/Temp Folder/Globals/global_test_top.sv} {1 {vlog -work work -sv {D:/Temp Folder/Globals/global_test_top.sv}
+Model Technology ModelSim ALTERA vlog 10.1b Compiler 2012.04 Apr 27 2012
+-- Compiling module global_test_top
+
+Top level modules:
+	global_test_top
+
+} {} {}}

@@ -1,0 +1,49 @@
+m255
+K3
+13
+cModel Technology
+Z0 dD:\Temp Folder\FSM
+vglobal_test_top
+Z1 DXx6 sv_std 3 std 0 22 F[19LRNL:5;XmIFh[XOPn1
+!i10b 1
+Z2 !s100 70oDDQ7[Pd8APQ`BQK7EN2
+Z3 Ilg[>Xo?LKCi<2;Ko15nng3
+Z4 VWe7UeV2czJk;dkF5cKbz12
+Z5 !s105 global_test_top_sv_unit
+S1
+Z6 dD:\Temp Folder\Globals
+Z7 w1386286897
+Z8 8D:/Temp Folder/Globals/global_test_top.sv
+Z9 FD:/Temp Folder/Globals/global_test_top.sv
+L0 1
+Z10 OV;L;10.1b;51
+r1
+!s85 0
+31
+!s108 1386287563.530000
+!s107 D:/Temp Folder/Globals/global_test_top.sv|
+Z11 !s90 -reportprogress|300|-work|work|-sv|D:/Temp Folder/Globals/global_test_top.sv|
+!s101 -O0
+Z12 o-work work -sv -O0
+vtask_global
+R1
+Z13 Ig<>50nIAK]OeFYj<jFTM?1
+Z14 VKZ>Q_bA?e87l;Ma4mbiNh3
+Z15 !s105 task_global_sv_unit
+S1
+R6
+Z16 w1386287560
+Z17 8D:/Temp Folder/Globals/task_global.sv
+Z18 FD:/Temp Folder/Globals/task_global.sv
+L0 1
+R10
+r1
+31
+Z19 !s90 -reportprogress|300|-work|work|-sv|D:/Temp Folder/Globals/task_global.sv|
+R12
+!i10b 1
+Z20 !s100 NimA:6im66AA0S9ZZ=0bh1
+!s85 0
+Z21 !s108 1386287563.238000
+Z22 !s107 D:/Temp Folder/Globals/task_global.sv|
+!s101 -O0
