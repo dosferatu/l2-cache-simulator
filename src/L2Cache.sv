@@ -7,7 +7,7 @@
 `include "Encoder.sv"
 `include "Multiplexor.sv"
 
-module L2Cache(command, L1Bus, operationBus, snoopBus, sharedBus, hit, miss, read, write);
+module L2Cache(L1Bus, L1OperationBus, sharedBus, sharedOperationBus, snoopBus, hit, miss, read, write);
   // Establish parameters that can be used for dynamic sizing of cache
   parameter byteSelect  = 6;    // Number of byte select bits according to line size
   parameter indexBits   = 14;   // Number of bits from the address used for indexing to a set in way
@@ -21,11 +21,11 @@ module L2Cache(command, L1Bus, operationBus, snoopBus, sharedBus, hit, miss, rea
   parameter I           = "I";   // Invalidate operation
 
   // Declare inputs and outputs
-  input[7:0]             command;      // This will bring in the command operation from the trace file
-  inout[L1BusSize - 1:0] L1Bus;        // Bus used for communicating with L1
-  inout[7:0]             operationBus; // Bus used to designate read/write/modify/invalidate
-  inout[1:0]             snoopBus;     // Bus for getting/putting snoops
-  inout[lineSize - 1:0]  sharedBus;    // FSB used by other processors and DRAM
+  inout[L1BusSize - 1:0] L1Bus;               // Bus used for communicating with L1
+  inout[15:0]            L1OperationBus;      // Bus used for communicating with L1
+  inout[lineSize - 1:0]  sharedBus;           // Bus used to designate read/write/modify/invalidate
+  inout[7:0]             sharedOperationBus;  // Bus used to designate read/write/modify/invalidate
+  inout[1:0]             snoopBus;            // Bus for getting/putting snoops
 
   output hit;
   output miss;
@@ -40,11 +40,8 @@ module L2Cache(command, L1Bus, operationBus, snoopBus, sharedBus, hit, miss, rea
                                           //  output the necessary output for according the MESI protocol and the operation command
                                           //  received from the bus
   
-  
-  wire[tagBits - 1:0]         CACHE_TAG;            // Current operation's tag from cache according to cache walk
   wire[lineSize - 1:0]        CACHE_DATA;           // Current operation's data (MESI bits) according to cache walk
   wire[$clog2(ways) - 1:0]    COMPARATOR_OUT;       
-  wire[ways * lineSize - 1:0] CACHE_DATA_OUT;
   wire[$clog2(ways) - 1:0]    VALID_OUT;            // Will hold all ways' MESI bit 0's pulled from cache storage
   wire HIT;
   wire[3:0] MESI;
@@ -62,7 +59,17 @@ module L2Cache(command, L1Bus, operationBus, snoopBus, sharedBus, hit, miss, rea
 
   // Initialize the L2 cache storage to an empty and invalidated state
   initial begin
-    //
+    automatic integer i,j;
+    automatic integer sets = 2**indexBits;
+
+    for (i = 0; i < ways; i = i + 1) begin
+      for (j = 0; j < sets; j = j + 1) begin
+        Storage[i][j].cacheTag = 0;
+        Storage[i][j].cacheData = 0;
+        Storage[i][j].mesi = 4'b0001;
+        Storage[i][j].lru = 0;
+      end
+    end
   end
 
   // Loop through the set array at row[index]
@@ -88,65 +95,55 @@ module L2Cache(command, L1Bus, operationBus, snoopBus, sharedBus, hit, miss, rea
   endtask
 
   task UpdateLRU; begin
-    automatic bit[indexBits - 1:0] Index;
-    automatic integer i, j;
+    automatic bit[indexBits - 1:0] index = L1Bus[byteSelect + indexBits - 1:byteSelect];
+    automatic integer i;
 
-    // Array to store the LRU bits from each way (LRU = 3 bits per x ways)
-    reg[$clog2(ways) - 1:0][2:0] LRUbits;
+    // Save the selected way's LRU value
+    automatic reg[2:0] selectedLRU = Storage[selectedWay][index].lru;
 
-    // Assign unpacked index input to our word using
-    // the streaming operator
-    {>>{Index}} = index;
-
-    // Loop through the set array at row[index]
-    // Store each lru bit in the way in to the matching
-    // position in the temporary LRUbits array
-    for (i = 0; i < ($clog2(ways) - 1); i = i + 1) begin
-      for (j = 0; j < ($clog2(ways) - 1); j = j  +1) begin
-        LRUbits[i][j] = Storage[i][Index].lru[j];
+    for (i = 0; i < ways; i = i + 1) begin
+      if (Storage[i][index].lru <= selectedLRU) begin
+        Storage[i][index].lru = Storage[i][index].lru + 1;
       end
     end
 
-    // Run LRU logic to update fields given
-    // Initialise all the bits to '0' first
-    // The accessed line is set to '0' (in later cases it is brought down to '0' but here its already 0 and remains same )
-    // After that increment all the bits assigned to other lines by 1
-    // In this case take one more condition like if the line already has a higher bit than any other bit , then it remains same
-    // So, if it is already highest , keep it the same
-    // If more than one line has same bit assigned to it, then evict the line that comes first from left
-    // which way is being read/written to
+    // Finally set the selected way to the most recently used
+    Storage[selectedWay][index].lru = 0;
     end
   endtask
-
-  // Wire up the cache data lines to the bus for the multiplexor input
-  initial begin
-    automatic integer i;
-    for (i = 0; i < ways; i = i + 1)
-      CACHE_DATA_OUT[(i + 1) * lineSize - 1: i * lineSize] = Storage[i][L1Bus[byteSelect + indexBits - 1:byteSelect]].cacheTag;
-  end
 
   // Generate parameter "ways" amount of comparators
   genvar i;
   generate
-  for (i = 0; i < ways; i = i + 1)
+  for (i = 0; i < ways; i = i + 1) begin
     Comparator #(ways) comparator(addressTag, Storage[i][L1Bus[byteSelect + indexBits - 1:0]].cacheTag, COMPARATOR_OUT[i]);
+  end
   endgenerate
 
   // Instantiate our encoder for n ways
   Encoder #(ways) encoder(COMPARATOR_OUT, ENCODER_OUT);
 
-  Multiplexor #(lineSize, ways)  multiplexor(ENCODER_OUT, CACHE_DATA_OUT, MUX_OUT);
-
-  // This is wrong; we need to AND each bit and OR the results
-  //assign hit = COMPARATOR_OUT & VALID_OUT;
-  assign cacheLine = MUX_OUT;
+  // Wire up the cache data lines to the bus for the multiplexor input
+  case (ways)
+    8: Multiplexor #(lineSize, ways)  multiplexor(ENCODER_OUT, Storage[0][L1Bus[byteSelect + indexBits - 1:0]].mesi,
+      Storage[1][L1Bus[byteSelect + indexBits - 1:0]].mesi,
+      Storage[2][L1Bus[byteSelect + indexBits - 1:0]].mesi,
+      Storage[3][L1Bus[byteSelect + indexBits - 1:0]].mesi,
+      Storage[4][L1Bus[byteSelect + indexBits - 1:0]].mesi,
+      Storage[5][L1Bus[byteSelect + indexBits - 1:0]].mesi,
+      Storage[6][L1Bus[byteSelect + indexBits - 1:0]].mesi,
+      Storage[7][L1Bus[byteSelect + indexBits - 1:0]].mesi,
+      MUX_OUT);
+  endcase
 
   // Performs necessary tasks/functions depending on whether there is a read or right to the cache
   always@(*) begin
     if (operationBus == R) begin
       // read cache
-      //ReadCache(Storage,index,;
+      //data = Storage[selectedWay][[L1Bus[byteSelect + indexBits - 1:0]].cacheData;
+      
       // Need a way to set the selected way
+      // Use the output of the encoder
       UpdateLRU;
     end
     else begin
@@ -155,7 +152,8 @@ module L2Cache(command, L1Bus, operationBus, snoopBus, sharedBus, hit, miss, rea
       // Update the selected way for the least recently used. Once this is
       // done we write to the cache and update the LRU bits in the set.
       QueryLRU;
-      // write cache
+
+      // Write to the cache and update the LRU
       UpdateLRU;
     end
   end
