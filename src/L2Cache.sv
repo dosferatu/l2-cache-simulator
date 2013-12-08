@@ -36,21 +36,22 @@ module L2Cache(L1Bus, L1OperationBus, sharedBus, sharedOperationBus, snoopBus, h
   reg[tagBits - 1:0]        addressTag;   // Current operation's tag from address
   reg[indexBits - 1:0]      index;        // Current operation's index from address
   reg[$clog2(ways) - 1:0]   selectedWay;  // Current operation's selected way according to LRU
-  reg[lineSize - 1:0]       data;         // This will be used for holding data (in this case MESI bits) from cache to give it to
+  //reg[lineSize - 1:0]       data;         // This will be used for holding data (in this case MESI bits) from cache to give it to
                                           //  output the necessary output for according the MESI protocol and the operation command
                                           //  received from the bus
   
   wire[lineSize - 1:0]        CACHE_DATA;           // Current operation's data (MESI bits) according to cache walk
   wire[$clog2(ways) - 1:0]    COMPARATOR_OUT;       
   wire[$clog2(ways) - 1:0]    VALID_OUT;            // Will hold all ways' MESI bit 0's pulled from cache storage
-
+  wire[lineSize - 1:0]        MUX_OUT;
+  
   reg hit;  // Stores whether a hit has occurred or not
   wire HIT;
 
   // Cache line structure
   typedef struct {
     bit[tagBits - 1:0] cacheTag;
-    bit[lineSize - 1:0] cacheData;
+    //bit[lineSize - 1:0] cacheData;
     bit[3:0] mesi;
     bit[$clog2(ways) - 1:0] lru;
   } line;
@@ -66,7 +67,7 @@ module L2Cache(L1Bus, L1OperationBus, sharedBus, sharedOperationBus, snoopBus, h
     for (i = 0; i < ways; i = i + 1) begin
       for (j = 0; j < sets; j = j + 1) begin
         Storage[i][j].cacheTag = 0;
-        Storage[i][j].cacheData = 0;
+        //Storage[i][j].cacheData = 0;
         Storage[i][j].mesi = 4'b0001;
         Storage[i][j].lru = 0;
       end
@@ -126,15 +127,15 @@ module L2Cache(L1Bus, L1OperationBus, sharedBus, sharedOperationBus, snoopBus, h
 
   // Wire up the cache data lines to the bus for the multiplexor input
   case (ways)
-    8: Multiplexor #(lineSize, ways)  multiplexor(ENCODER_OUT, Storage[0][L1Bus[byteSelect + indexBits - 1:0]].mesi,
-      Storage[1][L1Bus[byteSelect + indexBits - 1:0]].mesi,
-      Storage[2][L1Bus[byteSelect + indexBits - 1:0]].mesi,
-      Storage[3][L1Bus[byteSelect + indexBits - 1:0]].mesi,
-      Storage[4][L1Bus[byteSelect + indexBits - 1:0]].mesi,
-      Storage[5][L1Bus[byteSelect + indexBits - 1:0]].mesi,
-      Storage[6][L1Bus[byteSelect + indexBits - 1:0]].mesi,
-      Storage[7][L1Bus[byteSelect + indexBits - 1:0]].mesi,
-      MUX_OUT);
+    8: Multiplexor #(ways)  multiplexor(.select(ENCODER_OUT), .in0(Storage[0][L1Bus[byteSelect + indexBits - 1:0]].mesi),
+      .in1(Storage[1][L1Bus[byteSelect + indexBits - 1:0]].mesi),
+      .in2(Storage[2][L1Bus[byteSelect + indexBits - 1:0]].mesi),
+      .in3(Storage[3][L1Bus[byteSelect + indexBits - 1:0]].mesi),
+      .in4(Storage[4][L1Bus[byteSelect + indexBits - 1:0]].mesi),
+      .in5(Storage[5][L1Bus[byteSelect + indexBits - 1:0]].mesi),
+      .in6(Storage[6][L1Bus[byteSelect + indexBits - 1:0]].mesi),
+      .in7(Storage[7][L1Bus[byteSelect + indexBits - 1:0]].mesi),
+      .out(MUX_OUT));
   endcase
 
   // Wire up hit detection

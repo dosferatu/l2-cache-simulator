@@ -1,7 +1,7 @@
 module FileIO(L1Bus,sharedBus,L1OperationBus,sharedOperationBus);
   // Establish parameters for configurability
   parameter stats           = 1;
-  parameter addressSize     = 32;
+  parameter addressSize     = 64;
   parameter commandSize     = 32;
   
   // Define inputs and outputs
@@ -39,7 +39,7 @@ module FileIO(L1Bus,sharedBus,L1OperationBus,sharedOperationBus);
       #10 line = $fscanf(file, "%h %h", command, address);
     end
     
-    $fclose(file);
+    
   end
 
     always @(command) begin
