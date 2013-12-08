@@ -21,11 +21,11 @@ module L2Cache(L1Bus, L1OperationBus, sharedBus, sharedOperationBus, snoopBus, h
   parameter I           = "I";   // Invalidate operation
 
   // Declare inputs and outputs
-  inout[L1BusSize - 1:0] L1Bus;               // Bus used for communicating with L1
-  inout[15:0]            L1OperationBus;      // Bus used for communicating with L1
-  inout[lineSize - 1:0]  sharedBus;           // Bus used to designate read/write/modify/invalidate
-  inout[7:0]             sharedOperationBus;  // Bus used to designate read/write/modify/invalidate
-  inout[1:0]             snoopBus;            // Bus for getting/putting snoops
+  inout logic[L1BusSize - 1:0] L1Bus;               // Bus used for communicating with L1
+  inout logic[15:0]            L1OperationBus;      // Bus used for communicating with L1
+  inout logic[lineSize - 1:0]  sharedBus;           // Bus used to designate read/write/modify/invalidate
+  inout logic[7:0]             sharedOperationBus;  // Bus used to designate read/write/modify/invalidate
+  inout logic[1:0]             snoopBus;            // Bus for getting/putting snoops
 
   output hit;
   output miss;
@@ -43,8 +43,9 @@ module L2Cache(L1Bus, L1OperationBus, sharedBus, sharedOperationBus, snoopBus, h
   wire[lineSize - 1:0]        CACHE_DATA;           // Current operation's data (MESI bits) according to cache walk
   wire[$clog2(ways) - 1:0]    COMPARATOR_OUT;       
   wire[$clog2(ways) - 1:0]    VALID_OUT;            // Will hold all ways' MESI bit 0's pulled from cache storage
+
+  reg hit;  // Stores whether a hit has occurred or not
   wire HIT;
-  wire[3:0] MESI;
 
   // Cache line structure
   typedef struct {
@@ -136,25 +137,43 @@ module L2Cache(L1Bus, L1OperationBus, sharedBus, sharedOperationBus, snoopBus, h
       MUX_OUT);
   endcase
 
+  // Wire up hit detection
+  for (i = 0; i < ways; i = i + 1) begin
+    assign HIT = HIT | (COMPARATOR_OUT[i] & Storage[i][L1Bus[byteSelect + indexBits - 1:byteSelect]].mesi[0]);
+  end
+
+  // Store the result in a reg for us to access
+  assign hit = HIT;
+
   // Performs necessary tasks/functions depending on whether there is a read or right to the cache
-  always@(*) begin
-    if (operationBus == R) begin
-      // read cache
-      //data = Storage[selectedWay][[L1Bus[byteSelect + indexBits - 1:0]].cacheData;
-      
-      // Need a way to set the selected way
-      // Use the output of the encoder
-      UpdateLRU;
+  always@(L1Bus, L1OperationBus, sharedBus, sharedOperationBus) begin
+    if (L1OperationBus == "DR") begin
+      // Read cache
+
+      // Hit
+      if (hit)
+        $display("There was a cache hit!");
+      else
+        $display("There was a cache miss!");
+      // Miss
     end
-    else begin
-      // read for ownership on shared bus
 
-      // Update the selected way for the least recently used. Once this is
-      // done we write to the cache and update the LRU bits in the set.
-      QueryLRU;
+    else if (L1OperationBus == "DW") begin
+    end
 
-      // Write to the cache and update the LRU
-      UpdateLRU;
+    else if (L1OperationBus == "IR") begin
+    end
+
+    else if (sharedOperationBus == "R") begin
+    end
+
+    else if (sharedOperationBus == "W") begin
+    end
+
+    else if (sharedOperationBus == "M") begin
+    end
+
+    else if (sharedOperationBus == "I") begin
     end
   end
 endmodule

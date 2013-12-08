@@ -2,6 +2,8 @@
 // Test bench for the L2 cache
 //**************************************************
 
+`include "GetSnoopResult.sv"
+`include "FileIO.sv"
 `include "L2Cache.sv"
 
 module L2CacheTestBench();
@@ -60,6 +62,11 @@ module L2CacheTestBench();
       READ = READ + 1;
     else
       WRITE = WRITE + 1;
+  end
+
+  initial begin
+    $display("L1Bus       L1OperationBus          SharedBus         sharedOperationBus        snoopBus");
+    $monitor("%8h         %8h         %8h         %c          %h",L1Bus,L1OperationBus,sharedBus,sharedOperationBus,snoopBus);
   end
   
   initial begin
