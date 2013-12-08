@@ -3,9 +3,9 @@
 //
 //**************************************************
 
-`include "Comparator.sv"
-`include "Encoder.sv"
-`include "Multiplexor.sv"
+//`include "Comparator.sv"
+//`include "Encoder.sv"
+//`include "Multiplexor.sv"
 
 module L2Cache(L1Bus, L1OperationBus, sharedBus, sharedOperationBus, snoopBus, hit, miss, read, write);
   // Establish parameters that can be used for dynamic sizing of cache

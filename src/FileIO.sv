@@ -38,6 +38,8 @@ module FileIO(L1Bus,sharedBus,L1OperationBus,sharedOperationBus);
     while(!$feof(file)) begin
       #10 line = $fscanf(file, "%h %h", command, address);
     end
+    
+    $fclose(file);
   end
 
     always @(command) begin

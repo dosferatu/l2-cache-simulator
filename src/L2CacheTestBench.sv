@@ -2,13 +2,13 @@
 // Test bench for the L2 cache
 //**************************************************
 
-`include "GetSnoopResult.sv"
-`include "FileIO.sv"
-`include "L2Cache.sv"
+//`include "GetSnoopResult.sv"
+//`include "FileIO.sv"
+//`include "L2Cache.sv"
 
 module L2CacheTestBench();
   // Setup param for use in turning statistics on and off
-  parameter stats = 1;
+  parameter stats = 0;
   
   // Configurable params for the architecture used
   parameter commandSize = 8;
@@ -18,20 +18,14 @@ module L2CacheTestBench();
   parameter ways        = 8;
   parameter sets        = 16384;
   parameter lineSize    = 512;
-  reg [addressSize - 1:0] indexBits;
-  reg [addressSize - 1:0] byteSelect;
-  reg [addressSize - 1:0] tagBits;
-
-  initial begin
-    indexBits           = $clog2(sets);
-    byteSelect          = $clog2(lineSize);
-    tagBits             = indexBits - byteSelect bits;
-  end
+  parameter indexBits   = $clog2(sets);
+  parameter byteSelect  = $clog2(lineSize);
+  parameter tagBits   = addressSize - indexBits - byteSelect;
 
   // Wires to connect the cache and other modules to check operation of cache model
   wire [lineSize - 1:0]   sharedBus;
-  wire [255:0]            L1Bus
-  wire [7:0]              L1OperationBus;
+  wire [255:0]            L1Bus;
+  wire [15:0]             L1OperationBus;
   wire [7:0]              sharedOperationBus;
   wire [1:0]              snoopBus;
   
@@ -44,13 +38,13 @@ module L2CacheTestBench();
   
 
   // Instantiate our L2 cache
-  L2Cache #(ways, indexBits, lineSize, tagBits) cache(.L1Bus(L1Bus), .snoopBus(snoopBus), .sharedBus(sharedBus), .L1OperationBus(L1OperationBus), .sharedOperationBus(sharedOperationBus), .hit(hit), .miss(miss), .read(read), .write(write));
+  L2Cache #(.ways(ways), .indexBits(indexBits), .lineSize(lineSize), .tagBits(tagBits)) cache(.L1Bus(L1Bus), .snoopBus(snoopBus), .sharedBus(sharedBus), .L1OperationBus(L1OperationBus), .sharedOperationBus(sharedOperationBus), .hit(hit), .miss(miss), .read(read), .write(write));
 
   // Instantiate GetSnoopResult
-  GetSnoopResult #(addressSize) snoop(.sharedBus(sharedBus), .sharedOperationBus(sharedOperationBus));
+  GetSnoopResult #(.lineSize(lineSize)) snoop(.sharedBus(sharedBus), .sharedOperationBus(sharedOperationBus));
   
   // Instantiate fileIO module
-  FileIO #(addressSize) IO(.L1Bus(L1Bus), .sharedBus(sharedBus), .L1OperationBus(L1OperationBus), .sharedoperationBus(sharedOperationBus));
+  FileIO #(addressSize) IO(.L1Bus(L1Bus), .sharedBus(sharedBus), .L1OperationBus(L1OperationBus), .sharedOperationBus(sharedOperationBus));
   
   // Take statistics
   always @(hit,miss,read,write) begin
