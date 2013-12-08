@@ -1,15 +1,15 @@
-{D:/Temp Folder/FileIO/FileIO.sv} {1 {vlog -work work -sv {D:/Temp Folder/FileIO/FileIO.sv}
-Model Technology ModelSim ALTERA vlog 10.1b Compiler 2012.04 Apr 27 2012
--- Compiling module FileIO
-
-Top level modules:
-	FileIO
-
-} {} {}} {D:/Temp Folder/FileIO/GetSnoopResult.sv} {1 {vlog -work work -sv {D:/Temp Folder/FileIO/GetSnoopResult.sv}
+{D:/Temp Folder/FileIO/GetSnoopResult.sv} {1 {vlog -work work -sv {D:\Temp Folder\FileIO\GetSnoopResult.sv}
 Model Technology ModelSim ALTERA vlog 10.1b Compiler 2012.04 Apr 27 2012
 -- Compiling module GetSnoopResult
 
 Top level modules:
 	GetSnoopResult
+
+} {} {}} {D:/Temp Folder/FileIO/FileIO_test.sv} {1 {vlog -work work -sv {D:\Temp Folder\FileIO\FileIO_test.sv}
+Model Technology ModelSim ALTERA vlog 10.1b Compiler 2012.04 Apr 27 2012
+-- Compiling module FileIO_test
+
+Top level modules:
+	FileIO_test
 
 } {} {}}

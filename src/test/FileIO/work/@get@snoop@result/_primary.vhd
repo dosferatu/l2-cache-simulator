@@ -2,7 +2,7 @@ library verilog;
 use verilog.vl_types.all;
 entity GetSnoopResult is
     generic(
-        lineSize        : integer := 32
+        lineSize        : integer := 512
     );
     port(
         sharedBus       : inout  vl_logic_vector;

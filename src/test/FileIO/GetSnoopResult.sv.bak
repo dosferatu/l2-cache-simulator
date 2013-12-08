@@ -8,16 +8,10 @@ module GetSnoopResult(sharedBus,sharedOperationBus,snoopBus);
   inout logic [1:0]             snoopBus;
   
   // Registers needed for running the bidir ports
-  reg [lineSize - 1:0]          address;
-  //reg [7:0]                     operation;
   reg [1:0]                     snoop;
   
   // Assign registers for running the bidir ports
-  //assign sharedBus = address;
-  //assign sharedOperationBus = operation;
   assign snoopBus = snoop;
-  //assign address = sharedBus;
-  //assign operation = sharedOperationBus;
   
   // Perform a consistant procedure
   always @(sharedBus, sharedOperationBus) begin

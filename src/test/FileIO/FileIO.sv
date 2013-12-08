@@ -1,4 +1,4 @@
-module FileIO(L1Bus,sharedBus,L1OperationBus,sharedOperationBus);
+module FileIO(L1Bus,L1OperationBus,sharedBus,sharedOperationBus);
   // Establish parameters for configurability
   parameter addressSize     = 32;
   parameter commandSize     = 32;
@@ -6,7 +6,7 @@ module FileIO(L1Bus,sharedBus,L1OperationBus,sharedOperationBus);
   // Define inputs and outputs
   inout logic [255:0]   L1Bus;
   inout logic [511:0]   sharedBus;
-  inout logic [7:0]     L1OperationBus;
+  inout logic [15:0]     L1OperationBus;
   inout logic [7:0]     sharedOperationBus;
   
   // File handle and I/O function return value
@@ -14,7 +14,7 @@ module FileIO(L1Bus,sharedBus,L1OperationBus,sharedOperationBus);
   integer line;
   reg [255:0] L1Address;
   reg [511:0] sharedAddress;
-  reg [7:0]   L1Operation;
+  reg [15:0]   L1Operation;
   reg [7:0]   sharedOperation;
 
   // Buffers to store the parsed in command and address
@@ -43,19 +43,19 @@ module FileIO(L1Bus,sharedBus,L1OperationBus,sharedOperationBus);
               // L1 data cache read request
               $display("L1 data cache read request to address %h", address);
               L1Address <= address;
-              L1Operation <= "R";
+              L1Operation <= "DR";
             end
         1:  begin
               // L1 data cache write request
               $display("L1 data cache write request to address %h", address);
               L1Address <= address;
-              L1Operation <= "W";
+              L1Operation <= "DW";
             end
         2:  begin
               // L1 instruction cache read request
               $display("L1 instruction cache read request to address %h", address);
               L1Address <= address;
-              L1Operation <= "R";
+              L1Operation <= "IR";
             end  
         3:  begin
               // Snooped invalidate command

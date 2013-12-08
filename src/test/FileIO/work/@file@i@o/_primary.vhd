@@ -6,9 +6,9 @@ entity FileIO is
         commandSize     : integer := 32
     );
     port(
-        L1Bus           : inout  vl_logic_vector(255 downto 0);
+        L1Bus           : inout  vl_logic_vector(511 downto 0);
+        L1OperationBus  : inout  vl_logic_vector(15 downto 0);
         sharedBus       : inout  vl_logic_vector(511 downto 0);
-        L1OperationBus  : inout  vl_logic_vector(7 downto 0);
         sharedOperationBus: inout  vl_logic_vector(7 downto 0)
     );
     attribute mti_svvh_generic_type : integer;

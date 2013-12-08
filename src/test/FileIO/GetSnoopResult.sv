@@ -1,6 +1,6 @@
 module GetSnoopResult(sharedBus,sharedOperationBus,snoopBus);
   // Configurable params for dynamic system
-  parameter lineSize = 32;
+  parameter lineSize = 512;
   
   // Establish inputs and outputs of the module
   inout logic [lineSize - 1:0]  sharedBus;
