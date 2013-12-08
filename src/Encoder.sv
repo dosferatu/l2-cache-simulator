@@ -12,39 +12,23 @@
 //**************************************************
 
 module Encoder(in, out);
-parameter ways = 8;
+	parameter ways = 8;
 
-input[ways - 1:0] in;
+	input[ways - 1:0] in;
 
-// Take the base 2 log of the encoder input parameter
-output reg[$clog2(ways) - 1:0] out;
+	// Take the base 2 log of the encoder input parameter
+	output reg[$clog2(ways) - 1:0] out;
 
-always @(in)
-begin
-  case(in)
-    16'h00:
-      out = 3'b001;
-
-    16'h01:
-      out = 3'b001;
-
-    16'h02:
-      out = 3'b010;
-
-    16'h03:
-      out = 3'b011;
-
-    16'h04:
-      out = 3'b100;
-
-    16'h05:
-      out = 3'b101;
-
-    16'h06:
-      out = 3'b110;
-
-    16'h07:
-      out = 3'b111;
-  endcase
-end
+	initial begin
+		// Cases for outputting appropriate data;
+		always @(in) begin
+			genvar i;
+			generate 
+				for(i = 0; i < ways; i = i + 1) begin: encode
+					case(in)
+						i: out = i;
+					endcase
+				end
+			endgenerate
+	end
 endmodule
