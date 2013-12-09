@@ -8,7 +8,7 @@ module FileIO_test();
   
   FileIO trial(L1Bus,L1OperationBus,sharedBus,sharedOperationBus);
   
-  GetSnoopResult snoop(L1Bus,sharedOperationBus,snoopBus);
+  GetSnoopResult snoop(sharedBus,sharedOperationBus,snoopBus);
   
   initial begin
     $display("L1Bus       L1OperationBus        SharedBus         sharedOperationBus        snoopBus");

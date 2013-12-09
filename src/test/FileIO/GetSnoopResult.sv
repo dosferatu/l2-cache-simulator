@@ -15,11 +15,14 @@ module GetSnoopResult(sharedBus,sharedOperationBus,snoopBus);
   
   // Perform a consistant procedure
   always @(sharedBus, sharedOperationBus) begin
-    if(sharedBus[3:0] == 4'h2 || sharedBus[3:0] == 4'h8)
+    if(sharedBus[3:0] == 4'h2 || sharedBus[3:0] == 4'h8) begin
       snoop <= 2'b01;
-    else if(sharedBus[3:0] == 4'h4 || sharedBus[3:0] == 4'hC)
+    end
+    else if(sharedBus[3:0] == 4'h4 || sharedBus[3:0] == 4'hC) begin
       snoop <= 2'b10;
-    else
+    end
+    else begin
       snoop <= 2'b00;
+    end
   end
 endmodule
