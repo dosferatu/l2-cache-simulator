@@ -56,8 +56,7 @@ module L2CacheTestBench();
 
   initial begin
     if(stats == 1) begin
-      $display("HIT     MISS      READ      WRITE       RATIO");
-      $monitor("%d      %d        %d        %d        %d", HIT, MISS, READ, WRITE, HIT/MISS);
+      $monitor("Hit count:%d\tMiss count:%d\tRead count:%d\tWrite count:%d\tHit/Miss ratio:%d/%d", HIT, MISS, READ, WRITE, HIT,MISS);
     end
   end
 endmodule

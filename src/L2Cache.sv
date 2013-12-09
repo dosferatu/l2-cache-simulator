@@ -19,10 +19,16 @@ module L2Cache(L1Bus, L1OperationBus, sharedBus, sharedOperationBus, snoopBus, h
 
   // Declare inputs and outputs
   inout logic[L1BusSize - 1:0] L1Bus;               // Bus used for communicating with L1
-  inout logic[15:0]            L1OperationBus;      // Bus used for communicating with L1
-  inout logic[lineSize - 1:0]  sharedBus;           // Bus used to designate read/write/modify/invalidate
+  inout logic[15:0]            L1OperationBus;      // 
+  inout logic[lineSize - 1:0]  sharedBus;           // 
   inout logic[7:0]             sharedOperationBus;  // Bus used to designate read/write/modify/invalidate
   inout logic[1:0]             snoopBus;            // Bus for getting/putting snoops
+
+  reg [L1BusSize - 1:0] L1BusReg;
+  reg [15:0]            L1OperationBusReg;
+  reg [lineSize - 1:0]  sharedBusReg;
+  reg [7:0]             sharedOperationBusReg;
+  reg [1:0]             snoopBusReg;
 
   output hit;
   output miss;
@@ -97,6 +103,12 @@ module L2Cache(L1Bus, L1OperationBus, sharedBus, sharedOperationBus, snoopBus, h
   assign miss = ~hit;
   assign read = readFlag;
   assign write = ~readFlag;
+
+  // Assign buffers to the appropriate bus
+  //assign L1Bus = L1BusReg;
+  //assign L1OperationBus = L1OperationBusReg;
+  //assign sharedBus = sharedBusReg;
+  //assign sharedOperationBus = sharedOperationBusReg;
 
   //assign cacheData = MUX_OUT;
 
@@ -195,41 +207,164 @@ module L2Cache(L1Bus, L1OperationBus, sharedBus, sharedOperationBus, snoopBus, h
   endtask
 
   task ReadL2Cache; begin
+    readFlag = 1;
 
     if (hitFlag) begin
-      cacheData = Storage[selectedWay][index].mesi; // We just want MESI bits, not the actual data.
-    end
+      case (Storage[selectedWay][index].mesi)
+        M: begin
+          cacheData = Storage[selectedWay][index].mesi; // We just want MESI bits, not the actual data.
+          L1BusReg = "L1DR";
+          Storage[selectedWay][index].mesi = M;
+        end
+
+        E: begin
+          cacheData = Storage[selectedWay][index].mesi; // We just want MESI bits, not the actual data.
+          L1BusReg = "L1DR";
+          Storage[selectedWay][index].mesi = E;
+        end
+
+        S: begin
+          cacheData = Storage[selectedWay][index].mesi; // We just want MESI bits, not the actual data.
+          L1BusReg = "L1DR";
+          Storage[selectedWay][index].mesi = S;
+        end
+
+        I: begin
+          // Read from shared bus; if miss then RFO from shared bus
+            sharedBusReg <= L1Bus;
+            sharedOperationBusReg <= "R";
+            
+            // If snoop gives back HIT or HITM
+            if (snoopBus == 2'b01 || snoopBus == 2'b10) begin
+
+              QueryLRU;
+              Storage[selectedWay][index].cacheTag = addressTag;
+              Storage[selectedWay][index].cacheData = S;
+              Storage[selectedWay][index].mesi = S;
+              L1BusReg = "DR";
+            end
+
+            // Snoop gives back MISS
+            else if (snoopBus == 2'b00) begin
+              sharedBusReg <= L1Bus;
+              sharedOperationBusReg <= "M";
+
+              QueryLRU;
+              Storage[selectedWay][index].cacheTag = addressTag;
+              Storage[selectedWay][index].cacheData = E;
+              Storage[selectedWay][index].mesi = E;
+              L1BusReg = "DR";
+            end
+          end
+        endcase
+      end
 
     else if (!hitFlag) begin
       // Do get snoop, if nothing comes back:
-      // Read from shared bus
-      QueryLRU;
-      Storage[selectedWay][index].cacheTag = addressTag;
-      Storage[selectedWay][index].cacheData = S;
-      Storage[selectedWay][index].mesi = S;
+        sharedBusReg <= L1Bus;
+        sharedOperationBusReg <= "R";
+
+        // If snoop gives back HIT or HITM
+        if (snoopBus == 2'b01 || snoopBus == 2'b10) begin
+
+          QueryLRU;
+          Storage[selectedWay][index].cacheTag = addressTag;
+          Storage[selectedWay][index].cacheData = S;
+          Storage[selectedWay][index].mesi = S;
+          L1BusReg = "DR";
+        end
+
+        // Snoop gives back MISS
+        else if (snoopBus == 2'b00) begin
+          sharedBusReg <= L1Bus;
+          sharedOperationBusReg <= "M";
+
+          QueryLRU;
+          Storage[selectedWay][index].cacheTag = addressTag;
+          Storage[selectedWay][index].cacheData = E;
+          Storage[selectedWay][index].mesi = E;
+          L1BusReg = "DR";
+        end
+      end
     end
-  end
   endtask
 
   task WriteL2Cache; begin
+    readFlag = 0;
 
     if (hitFlag) begin
+      case(Storage[selectedWay][index].mesi)
+        M: begin
+          // Write to Cache
+          Storage[selectedWay][index].cacheData = M;
+          Storage[selectedWay][index].mesi = M;
+        end
 
-      // Write to Cache
-      Storage[selectedWay][index].cacheData = M;
-      Storage[selectedWay][index].mesi = M;
+        E: begin
+          // Send invalidate
+          sharedBusReg <= L1Bus;
+          sharedOperationBusReg <= "I";
+          Storage[selectedWay][index].cacheData = M;
+          Storage[selectedWay][index].mesi = M;
+        end
 
-      // Write to L1 bus
+        S: begin
+          // Send invalidate
+          sharedBusReg <= L1Bus;
+          sharedOperationBusReg <= "I";
+          Storage[selectedWay][index].cacheData = M;
+          Storage[selectedWay][index].mesi = M;
+        end
+
+        I: begin
+          sharedBusReg <= L1Bus;
+          sharedOperationBusReg <= "R";
+
+          case (snoopBus)
+            2'b01: begin // HIT
+            Storage[selectedWay][index].cacheData = M;
+            Storage[selectedWay][index].mesi = M;
+            end
+
+            2'b10: begin // HITM
+            sharedBusReg <= L1Bus;
+            sharedOperationBusReg <= "M";
+            Storage[selectedWay][index].cacheData = M;
+            Storage[selectedWay][index].mesi = M;
+            end
+
+            2'b00: begin // MISS
+            Storage[selectedWay][index].cacheData = M;
+            Storage[selectedWay][index].mesi = M;
+            end
+          endcase
+        end
+      endcase
     end
 
     else if (!hitFlag) begin
-      // Do get snoop, if nothing comes back:
-      // RFO from shared bus
-      QueryLRU;
-      Storage[selectedWay][index].cacheTag = addressTag;
-      Storage[selectedWay][index].cacheData = M;
-      Storage[selectedWay][index].mesi = M;
-    end
+      sharedBusReg <= L1Bus;
+      sharedOperationBusReg <= "R";
+
+      case (snoopBus)
+        2'b01: begin // HIT
+        Storage[selectedWay][index].cacheData = M;
+        Storage[selectedWay][index].mesi = M;
+      end
+
+      2'b10: begin // HITM
+        sharedBusReg <= L1Bus;
+        sharedOperationBusReg <= "M";
+        Storage[selectedWay][index].cacheData = M;
+        Storage[selectedWay][index].mesi = M;
+      end
+
+      2'b00: begin // MISS
+        Storage[selectedWay][index].cacheData = M;
+        Storage[selectedWay][index].mesi = M;
+      end
+    endcase
+  end
   end
   endtask
 
