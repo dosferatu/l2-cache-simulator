@@ -31,14 +31,52 @@ task command5 ();
 endtask
 
 // Snooped read with intent to modify
-task command6 ();
+task SnoopedRFO ();
+	if(hitFlag) begin
+		case(Storage[selectedWay][index].mesi)
+			M: begin
+				snoopBusReg <= 2'b10;
+				sharedBusReg <= Storage[selectedWay][index].cacheData;
+				Storage[selectedWay][index].mesi = I;
+				Storage[selectedWay][index].lru = 3;
+			end
+			E: begin
+				snoopBusReg <= 2'b01;
+				sharedBusReg <= Storage[selectedWay][index].cacheData;
+				Storage[selectedWay][index].mesi = I;
+				Storage[selectedWay][index].lru = 3;
+			end
+			S: begin
+				snoopBusReg <= 2'b01;
+				Storage[selectedWay][index].mesi = I;
+				Storage[selectedWay][index].lru = 3;
+			end
+			I: // Do nothing
 endtask
 
 // Clear cache & reset all states
-task command8 ();
+task ClearL2 ();
+	automatic integer i,j;
+    automatic integer sets = 2**indexBits;
+
+    for (i = 0; i < ways; i = i + 1) begin
+      for (j = 0; j < sets; j = j + 1) begin
+        Storage[i][j].mesi = I;
+		Storage[i][j].lru = 0;
+      end
+    end
 endtask
 
 // Print contents and state of each valid
-task command9 ();
+task DisplayValid ();
+	automatic integer i,j;
+    automatic integer sets = 2**indexBits;
+
+    for (i = 0; i < ways; i = i + 1) begin
+      for (j = 0; j < sets; j = j + 1) begin
+        if(Storage[i][j].mesi != I);
+			$display("Way: %d \t Index: %h \t MESI: %b \t LRU: %d", i, j, Storage[i][j].mesi, Storage[i][j].lru);
+      end
+    end
 endtask
 
