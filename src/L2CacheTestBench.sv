@@ -27,7 +27,10 @@ module L2CacheTestBench();
   wire [1:0]              snoopBus;
   
   // Stuff for statistics
-  wire hit, miss, read, write;
+  wire [31:0] hit;
+  wire [31:0] miss;
+  wire [31:0] read;
+  wire [31:0] write;
   integer HIT, MISS, READ, WRITE;
   initial begin
     HIT = 0; MISS = 0; READ = 0; WRITE = 0;
@@ -43,21 +46,9 @@ module L2CacheTestBench();
   // Instantiate fileIO module
   FileIO #(.display(display), .addressSize(addressSize)) IO(.L1Bus(L1Bus), .sharedBus(sharedBus), .L1OperationBus(L1OperationBus), .sharedOperationBus(sharedOperationBus));
   
-  // Take statistics
-  always @(hit,miss,read,write) begin
-    if(hit)
-      HIT = HIT + 1;
-    else if(miss)
-      MISS = MISS + 1;
-    else if(read)
-      READ = READ + 1;
-    else
-      WRITE = WRITE + 1;
-  end
-
-  initial begin
-    if(stats == 1 && display == 1) begin
-      $monitor("Hit count:%d\tMiss count:%d\tRead count:%d\tWrite count:%d\tHit/Miss ratio:%d/%d", HIT, MISS, READ, WRITE, HIT,MISS);
+  always @(L1OperationBus) begin
+    if (L1OperationBus == "PS") begin
+      $display("Hits: %d \t Misses: %d \t Reads: %d \t Writes: %d \t Hit/Miss ratio: %d / %d", hit, miss, read, write, hit, miss);
     end
   end
 endmodule

@@ -4,259 +4,265 @@
 //**************************************************
 
 module L2Cache(L1Bus, L1OperationBus, sharedBus, sharedOperationBus, snoopBus, hit, miss, read, write);
-  // Establish parameters that can be used for dynamic sizing of cache
-  parameter addressSize     = 32;   // Instruction size used by architecture
-  parameter byteSelectBits  = 6;    // Number of byte select bits according to line size
-  parameter indexBits       = 14;   // Number of bits from the address used for indexing to a set in way
-  parameter lineSize        = 512;  // Size of the line of data in a set and used for shared bus size
-  parameter L1BusSize       = 256;  // Size of Bus to communicate with the L1
-  parameter tagBits         = 12;   // Number of bits from the address used for tag for validating index
-  parameter ways            = 8;    // Number of ways for set associativity
-  parameter M               = 1;    //
-  parameter E               = 2;    //
-  parameter S               = 4;    //
-  parameter I               = 8;    //
-  parameter display         = 0;    // Set display flag
+// Establish parameters that can be used for dynamic sizing of cache
+parameter addressSize     = 32;   // Instruction size used by architecture
+parameter byteSelectBits  = 6;    // Number of byte select bits according to line size
+parameter indexBits       = 14;   // Number of bits from the address used for indexing to a set in way
+parameter lineSize        = 512;  // Size of the line of data in a set and used for shared bus size
+parameter L1BusSize       = 256;  // Size of Bus to communicate with the L1
+parameter tagBits         = 12;   // Number of bits from the address used for tag for validating index
+parameter ways            = 8;    // Number of ways for set associativity
+parameter M               = 1;    //
+parameter E               = 2;    //
+parameter S               = 4;    //
+parameter I               = 8;    //
+parameter display         = 0;    // Set display flag
 
-  // Declare inputs and outputs
-  inout logic[L1BusSize - 1:0] L1Bus;               // Bus used for communicating with L1
-  inout logic[15:0]            L1OperationBus;      // 
-  inout logic[lineSize - 1:0]  sharedBus;           // 
-  inout logic[7:0]             sharedOperationBus;  // Bus used to designate read/write/modify/invalidate
-  inout logic[1:0]             snoopBus;            // Bus for getting/putting snoops
+// Declare inputs and outputs
+inout logic[L1BusSize - 1:0] L1Bus;               // Bus used for communicating with L1
+inout logic[15:0]            L1OperationBus;      // 
+inout logic[lineSize - 1:0]  sharedBus;           // 
+inout logic[7:0]             sharedOperationBus;  // Bus used to designate read/write/modify/invalidate
+inout logic[1:0]             snoopBus;            // Bus for getting/putting snoops
 
-  reg [L1BusSize - 1:0] L1BusReg;
-  reg [15:0]            L1OperationBusReg;
-  reg [lineSize - 1:0]  sharedBusReg;
-  reg [7:0]             sharedOperationBusReg;
-  reg [1:0]             snoopBusReg;
+reg [L1BusSize - 1:0] L1BusReg;
+reg [15:0]            L1OperationBusReg;
+reg [lineSize - 1:0]  sharedBusReg;
+reg [7:0]             sharedOperationBusReg;
+reg [1:0]             snoopBusReg;
 
-  output hit;
-  output miss;
-  output read;
-  output write;
+output reg[31:0] hit;
+output reg[31:0] miss;
+output reg[31:0] read;
+output reg[31:0] write;
 
-  // Establish wires/registers for use by the module
-  reg[tagBits - 1:0]        addressTag;   // Current operation's tag from address
-  reg[byteSelectBits - 1:0] byteSelect;   // Current byte select value
-  reg[lineSize - 1:0]       cacheData;    // Data from the cache line being operated on
-  reg[tagBits - 1:0]        cacheTag;     // Tag from the cache line being operated on
-  reg                       hitFlag;      // Stores whether a hit has occurred or not
-  reg                       readFlag;     // Stores whether we are doing a read or a write operation
-  reg[indexBits - 1:0]      index;        // Currently selected set
-  reg[$clog2(ways) - 1:0]   selectedWay;  // Current operation's selected way according to LRU
-  
-  wire[ways - 1:0]          COMPARATOR_OUT;       
-  wire[lineSize - 1:0]      MUX_OUT;
+// Establish wires/registers for use by the module
+reg[tagBits - 1:0]        addressTag;   // Current operation's tag from address
+reg[byteSelectBits - 1:0] byteSelect;   // Current byte select value
+reg[lineSize - 1:0]       cacheData;    // Data from the cache line being operated on
+reg[tagBits - 1:0]        cacheTag;     // Tag from the cache line being operated on
+reg                       hitFlag;      // Stores whether a hit has occurred or not
+reg                       readFlag;     // Stores whether we are doing a read or a write operation
+reg[indexBits - 1:0]      index;        // Currently selected set
+reg[$clog2(ways) - 1:0]   selectedWay;  // Current operation's selected way according to LRU
 
-  // Cache line structure
-  typedef struct {
-    bit[tagBits - 1:0] cacheTag;
-    bit[lineSize - 1:0] cacheData;
-    bit[3:0] mesi;
-    bit[$clog2(ways) - 1:0] lru;
-  } line;
+wire[ways - 1:0]          COMPARATOR_OUT;       
+wire[lineSize - 1:0]      MUX_OUT;
 
-  // Generate n ways using n structs x m sets
-  line Storage[ways - 1:0][2**indexBits - 1:0];
+// Cache line structure
+typedef struct {
+  bit[tagBits - 1:0] cacheTag;
+bit[lineSize - 1:0] cacheData;
+bit[3:0] mesi;
+bit[$clog2(ways) - 1:0] lru;
+} line;
 
-  // Initialize the L2 cache storage to an empty and invalidated state
-  initial begin
-    automatic integer i,j;
-    automatic integer sets = 2**indexBits;
+// Generate n ways using n structs x m sets
+line Storage[ways - 1:0][2**indexBits - 1:0];
 
-    for (i = 0; i < ways; i = i + 1) begin
-      for (j = 0; j < sets; j = j + 1) begin
-        Storage[i][j].cacheTag = 0;
-        Storage[i][j].cacheData = 0;
-        Storage[i][j].mesi = I;
-        Storage[i][j].lru = 0;
-      end
-    end
-  end
+// Initialize the L2 cache storage to an empty and invalidated state
+initial begin
+  automatic integer i,j;
+  automatic integer sets = 2**indexBits;
 
-  // Generate parameter "ways" amount of comparators
-  genvar i;
-  generate
   for (i = 0; i < ways; i = i + 1) begin
-    Comparator #(ways) comparator(addressTag, Storage[i][L1Bus[byteSelectBits + indexBits - 1:0]].cacheTag, COMPARATOR_OUT[i]);
-  end
-  endgenerate
-
-  // Instantiate our encoder for n ways
-  Encoder #(ways) encoder(COMPARATOR_OUT, ENCODER_OUT);
-
-  // Wire up the cache data lines to the bus for the multiplexor input
-  case (ways)
-    8: Multiplexor #(ways)  multiplexor(.select(ENCODER_OUT), .in0(Storage[0][L1Bus[byteSelectBits + indexBits - 1:0]].mesi),
-      .in1(Storage[1][L1Bus[byteSelectBits + indexBits - 1:0]].mesi),
-      .in2(Storage[2][L1Bus[byteSelectBits + indexBits - 1:0]].mesi),
-      .in3(Storage[3][L1Bus[byteSelectBits + indexBits - 1:0]].mesi),
-      .in4(Storage[4][L1Bus[byteSelectBits + indexBits - 1:0]].mesi),
-      .in5(Storage[5][L1Bus[byteSelectBits + indexBits - 1:0]].mesi),
-      .in6(Storage[6][L1Bus[byteSelectBits + indexBits - 1:0]].mesi),
-      .in7(Storage[7][L1Bus[byteSelectBits + indexBits - 1:0]].mesi),
-      .out(MUX_OUT));
-  endcase
-
-  // Assign the statistics outputs
-  assign hit = hitFlag;
-  assign miss = ~hit;
-  assign read = readFlag;
-  assign write = ~readFlag;
-
-  // Assign buffers to the appropriate bus
-  //assign L1Bus = L1BusReg;
-  //assign L1OperationBus = L1OperationBusReg;
-  //assign sharedBus = sharedBusReg;
-  //assign sharedOperationBus = sharedOperationBusReg;
-
-  //assign cacheData = MUX_OUT;
-
-  // Performs necessary tasks/functions depending on whether there is a read or right to the cache
-  always@(L1Bus, L1OperationBus, sharedBus, sharedOperationBus) begin
-
-    // Command 0
-    if (L1OperationBus == "DR") begin
-      // Update the cache
-      addressTag = L1Bus[addressSize - 1:byteSelectBits + indexBits];
-      byteSelect = L1Bus[byteSelectBits - 1:0];
-      index = L1Bus[byteSelectBits + indexBits - 1:byteSelectBits];
-
-      CheckForHit;
-      ReadL2Cache;
-      UpdateLRU;
-      if (display == 1)
-        DisplayState(L1OperationBus);
-    end
-
-    // Command 1
-    else if (L1OperationBus == "DW") begin
-      // Update the cache
-      addressTag = L1Bus[addressSize - 1:byteSelectBits + indexBits];
-      byteSelect = L1Bus[byteSelectBits - 1:0];
-      index = L1Bus[byteSelectBits + indexBits - 1:byteSelectBits];
-
-      CheckForHit;
-      WriteL2Cache;
-      UpdateLRU;
-      if (display == 1)
-        DisplayState(L1OperationBus);
-    end
-
-    // Command 2
-    else if (L1OperationBus == "IR") begin
-      // Update the cache
-      addressTag = L1Bus[addressSize - 1:byteSelectBits + indexBits];
-      byteSelect = L1Bus[byteSelectBits - 1:0];
-      index = L1Bus[byteSelectBits + indexBits - 1:byteSelectBits];
-
-      CheckForHit;
-      ReadL2Cache;
-      UpdateLRU;
-      if (display == 1)
-        DisplayState(L1OperationBus);
-    end
-
-    // Command 3
-    else if (sharedOperationBus == "I") begin
-      // Update the cache
-      addressTag = sharedBus[addressSize - 1:byteSelectBits + indexBits];
-      byteSelect = sharedBus[byteSelectBits - 1:0];
-      index = sharedBus[byteSelectBits + indexBits - 1:byteSelectBits];
-
-      CheckForHit;
-      ReadL2Cache;
-      UpdateLRU;
-      if (display == 1)
-        DisplayState(sharedOperationBus);
-    end
-
-    // Command 4
-    else if (sharedOperationBus == "R") begin
-      // Update the cache
-      addressTag = sharedBus[addressSize - 1:byteSelectBits + indexBits];
-      byteSelect = sharedBus[byteSelectBits - 1:0];
-      index = sharedBus[byteSelectBits + indexBits - 1:byteSelectBits];
-
-      CheckForHit;
-      ReadL2Cache;
-      UpdateLRU;
-      if (display == 1)
-        DisplayState(sharedOperationBus);
-    end
-
-    // Command 5
-    else if (sharedOperationBus == "W") begin
-      // Update the cache
-      addressTag = sharedBus[addressSize - 1:byteSelectBits + indexBits];
-      byteSelect = sharedBus[byteSelectBits - 1:0];
-      index = sharedBus[byteSelectBits + indexBits - 1:byteSelectBits];
-
-      CheckForHit;
-      ReadL2Cache;
-      UpdateLRU;
-      if (display == 1)
-        DisplayState(sharedOperationBus);
-    end
-
-    // Command 6
-    else if (sharedOperationBus == "M") begin
-      // Update the cache
-      addressTag = sharedBus[addressSize - 1:byteSelectBits + indexBits];
-      byteSelect = sharedBus[byteSelectBits - 1:0];
-      index = sharedBus[byteSelectBits + indexBits - 1:byteSelectBits];
-
-      CheckForHit;
-      ReadL2Cache;
-      UpdateLRU;
-      if (display == 1)
-        DisplayState(sharedOperationBus);
-    end
-
-    // Command 8
-    else if (L1OperationBus == "CL") begin
-      ClearL2;
-    end
-
-    // Command 9
-    else if (L1OperationBus == "PR") begin
-      DisplayValid;
+    for (j = 0; j < sets; j = j + 1) begin
+      Storage[i][j].cacheTag = 0;
+      Storage[i][j].cacheData = 0;
+      Storage[i][j].mesi = I;
+      Storage[i][j].lru = 0;
     end
   end
 
-  task DisplayState (input[15:0] operation); begin
-    automatic integer i;
-    automatic string mesiStatus;
+  // Initialize statistics
+  hit = 0;
+  miss = 0;
+  read = 0;
+  write = 0;
+end
 
-    $display("Command: %s", operation);
-    $display("L1 Bus (Hex): %h", L1Bus[addressSize - 1:0]);
-    $display("Shared Bus (Hex): %h", sharedBus[addressSize - 1:0]);
-    $display("Address Tag (Hex): %h",addressTag);
-    $display("Byte Select (Decimal): %d",byteSelect);
-    $display("Index (Decimal): %d", index);
+// Generate parameter "ways" amount of comparators
+genvar i;
+generate
+for (i = 0; i < ways; i = i + 1) begin
+  Comparator #(ways) comparator(addressTag, Storage[i][L1Bus[byteSelectBits + indexBits - 1:0]].cacheTag, COMPARATOR_OUT[i]);
+end
+endgenerate
 
-    if (hitFlag) begin
-      $display("Cache hit from way: %d", selectedWay);
-    end
+// Instantiate our encoder for n ways
+Encoder #(ways) encoder(COMPARATOR_OUT, ENCODER_OUT);
 
-    else if (~hitFlag) begin
-      $display("Cache miss from way: %d", selectedWay);
-    end
+// Wire up the cache data lines to the bus for the multiplexor input
+case (ways)
+  8: Multiplexor #(ways)  multiplexor(.select(ENCODER_OUT), .in0(Storage[0][L1Bus[byteSelectBits + indexBits - 1:0]].mesi),
+    .in1(Storage[1][L1Bus[byteSelectBits + indexBits - 1:0]].mesi),
+    .in2(Storage[2][L1Bus[byteSelectBits + indexBits - 1:0]].mesi),
+    .in3(Storage[3][L1Bus[byteSelectBits + indexBits - 1:0]].mesi),
+    .in4(Storage[4][L1Bus[byteSelectBits + indexBits - 1:0]].mesi),
+    .in5(Storage[5][L1Bus[byteSelectBits + indexBits - 1:0]].mesi),
+    .in6(Storage[6][L1Bus[byteSelectBits + indexBits - 1:0]].mesi),
+    .in7(Storage[7][L1Bus[byteSelectBits + indexBits - 1:0]].mesi),
+    .out(MUX_OUT));
+endcase
 
-    for (i = 0; i < ways; i = i + 1) begin
-      case (Storage[i][index].mesi)
-        M: mesiStatus = "M";
-        E: mesiStatus = "E";
-        S: mesiStatus = "S";
-        I: mesiStatus = "I";
-      endcase
+// Assign the statistics outputs
+//assign hit = hitFlag;
+//assign miss = ~hitFlag;
+//assign read = readFlag;
+//assign write = ~readFlag;
 
-      $display("Way: %d\tLRU Value: %d\tMESI status: %s", i, Storage[i][index].lru, mesiStatus);
-    end
+// Assign buffers to the appropriate bus
+//assign L1Bus = L1BusReg;
+//assign L1OperationBus = L1OperationBusReg;
+//assign sharedBus = sharedBusReg;
+//assign sharedOperationBus = sharedOperationBusReg;
 
-    $display("\n");
+//assign cacheData = MUX_OUT;
+
+// Performs necessary tasks/functions depending on whether there is a read or right to the cache
+always@(L1Bus, L1OperationBus, sharedBus, sharedOperationBus) begin
+
+  // Command 0
+  if (L1OperationBus == "DR") begin
+    // Update the cache
+    addressTag = L1Bus[addressSize - 1:byteSelectBits + indexBits];
+    byteSelect = L1Bus[byteSelectBits - 1:0];
+    index = L1Bus[byteSelectBits + indexBits - 1:byteSelectBits];
+
+    CheckForHit;
+    ReadL2Cache;
+    UpdateLRU;
+    if (display == 1)
+      DisplayState(L1OperationBus);
   end
+
+  // Command 1
+  else if (L1OperationBus == "DW") begin
+    // Update the cache
+    addressTag = L1Bus[addressSize - 1:byteSelectBits + indexBits];
+    byteSelect = L1Bus[byteSelectBits - 1:0];
+    index = L1Bus[byteSelectBits + indexBits - 1:byteSelectBits];
+
+    CheckForHit;
+    WriteL2Cache;
+    UpdateLRU;
+    if (display == 1)
+      DisplayState(L1OperationBus);
+  end
+
+  // Command 2
+  else if (L1OperationBus == "IR") begin
+    // Update the cache
+    addressTag = L1Bus[addressSize - 1:byteSelectBits + indexBits];
+    byteSelect = L1Bus[byteSelectBits - 1:0];
+    index = L1Bus[byteSelectBits + indexBits - 1:byteSelectBits];
+
+    CheckForHit;
+    ReadL2Cache;
+    UpdateLRU;
+    if (display == 1)
+      DisplayState(L1OperationBus);
+  end
+
+  // Command 3
+  else if (sharedOperationBus == "I") begin
+    // Update the cache
+    addressTag = sharedBus[addressSize - 1:byteSelectBits + indexBits];
+    byteSelect = sharedBus[byteSelectBits - 1:0];
+    index = sharedBus[byteSelectBits + indexBits - 1:byteSelectBits];
+
+    CheckForHit;
+    ReadL2Cache;
+    UpdateLRU;
+    if (display == 1)
+      DisplayState(sharedOperationBus);
+  end
+
+  // Command 4
+  else if (sharedOperationBus == "R") begin
+    // Update the cache
+    addressTag = sharedBus[addressSize - 1:byteSelectBits + indexBits];
+    byteSelect = sharedBus[byteSelectBits - 1:0];
+    index = sharedBus[byteSelectBits + indexBits - 1:byteSelectBits];
+
+    CheckForHit;
+    ReadL2Cache;
+    UpdateLRU;
+    if (display == 1)
+      DisplayState(sharedOperationBus);
+  end
+
+  // Command 5
+  else if (sharedOperationBus == "W") begin
+    // Update the cache
+    addressTag = sharedBus[addressSize - 1:byteSelectBits + indexBits];
+    byteSelect = sharedBus[byteSelectBits - 1:0];
+    index = sharedBus[byteSelectBits + indexBits - 1:byteSelectBits];
+
+    CheckForHit;
+    ReadL2Cache;
+    UpdateLRU;
+    if (display == 1)
+      DisplayState(sharedOperationBus);
+  end
+
+  // Command 6
+  else if (sharedOperationBus == "M") begin
+    // Update the cache
+    addressTag = sharedBus[addressSize - 1:byteSelectBits + indexBits];
+    byteSelect = sharedBus[byteSelectBits - 1:0];
+    index = sharedBus[byteSelectBits + indexBits - 1:byteSelectBits];
+
+    CheckForHit;
+    ReadL2Cache;
+    UpdateLRU;
+    if (display == 1)
+      DisplayState(sharedOperationBus);
+  end
+
+  // Command 8
+  else if (L1OperationBus == "CL") begin
+    ClearL2;
+  end
+
+  // Command 9
+  else if (L1OperationBus == "PR") begin
+    DisplayValid;
+  end
+end
+
+task DisplayState (input[15:0] operation); begin
+  automatic integer i;
+  automatic string mesiStatus;
+
+  $display("Command: %s", operation);
+  $display("L1 Bus (Hex): %h", L1Bus[addressSize - 1:0]);
+  $display("Shared Bus (Hex): %h", sharedBus[addressSize - 1:0]);
+  $display("Address Tag (Hex): %h",addressTag);
+  $display("Byte Select (Decimal): %d",byteSelect);
+  $display("Index (Decimal): %d", index);
+
+  if (hitFlag) begin
+    $display("Cache hit from way: %d", selectedWay);
+  end
+
+  else if (~hitFlag) begin
+    $display("Cache miss from way: %d", selectedWay);
+  end
+
+  for (i = 0; i < ways; i = i + 1) begin
+    case (Storage[i][index].mesi)
+      M: mesiStatus = "M";
+      E: mesiStatus = "E";
+      S: mesiStatus = "S";
+      I: mesiStatus = "I";
+    endcase
+
+    $display("Way: %d\tLRU Value: %d\tMESI status: %s", i, Storage[i][index].lru, mesiStatus);
+  end
+
+  $display("\n");
+end
 endtask
 
 // Update the hit detection flag and set the selected way if necessary.
@@ -268,11 +274,16 @@ endtask
     for (i = 0; i < ways; i = i + 1) begin
       hitFlag = hitFlag | (COMPARATOR_OUT[i] & ~Storage[i][index].mesi[3]);
     end
+
+    if (hitFlag)
+      hit = hit + 1;
+    else if (!hitFlag)
+      miss = miss + 1;
   end
 endtask
 
 task ReadL2Cache; begin
-  readFlag = 1;
+  read = read + 1;
 
   if (hitFlag) begin
     case (Storage[selectedWay][index].mesi)
@@ -395,7 +406,7 @@ task ReadL2Cache; begin
   endtask
 
   task WriteL2Cache; begin
-    readFlag = 0;
+    write = write + 1;
 
     if (hitFlag) begin
       case(Storage[selectedWay][index].mesi)

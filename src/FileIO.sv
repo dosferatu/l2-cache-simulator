@@ -36,6 +36,7 @@ module FileIO(L1Bus,L1OperationBus,sharedBus,sharedOperationBus);
     while(!$feof(file)) begin
       #10 line = $fscanf(file, "%h %h", command, address);
     end
+    L1Operation = "PS"; // Print stats
   end
 
     always @(command) begin
