@@ -55,11 +55,6 @@ module L2CacheTestBench();
   end
 
   initial begin
-    $display("L1Bus\t\tL1OperationBus\t\tSharedBus\tsharedOperationBus\t\tsnoopBus");
-    $monitor("%8h\t\t%s\t\t%8h\t%c\t\t%h",L1Bus,L1OperationBus,sharedBus,sharedOperationBus,snoopBus);
-  end
-
-  initial begin
     if(stats == 1) begin
       $display("HIT     MISS      READ      WRITE       RATIO");
       $monitor("%d      %d        %d        %d        %d", HIT, MISS, READ, WRITE, HIT/MISS);

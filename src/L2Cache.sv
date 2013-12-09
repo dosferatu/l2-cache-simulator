@@ -35,6 +35,7 @@ module L2Cache(L1Bus, L1OperationBus, sharedBus, sharedOperationBus, snoopBus, h
   reg[lineSize - 1:0]       cacheData;    // Data from the cache line being operated on
   reg[tagBits - 1:0]        cacheTag;     // Tag from the cache line being operated on
   reg                       hitFlag;      // Stores whether a hit has occurred or not
+  reg                       readFlag;     // Stores whether we are doing a read or a write operation
   reg[indexBits - 1:0]      index;        // Currently selected set
   reg[$clog2(ways) - 1:0]   selectedWay;  // Current operation's selected way according to LRU
   
@@ -91,6 +92,14 @@ module L2Cache(L1Bus, L1OperationBus, sharedBus, sharedOperationBus, snoopBus, h
       .out(MUX_OUT));
   endcase
 
+  // Assign the statistics outputs
+  assign hit = hitFlag;
+  assign miss = ~hit;
+  assign read = readFlag;
+  assign write = ~readFlag;
+
+  //assign cacheData = MUX_OUT;
+
   // Performs necessary tasks/functions depending on whether there is a read or right to the cache
   always@(L1Bus, L1OperationBus, sharedBus, sharedOperationBus) begin
     // Update the cache
@@ -144,7 +153,8 @@ module L2Cache(L1Bus, L1OperationBus, sharedBus, sharedOperationBus, snoopBus, h
     automatic string mesiStatus;
 
     $display("Command: %s", operation);
-    $display("Address (Hex): %h", L1Bus[addressSize - 1:0]);
+    $display("L1 Bus (Hex): %h", L1Bus[addressSize - 1:0]);
+    $display("Shared Bus (Hex): %h", sharedBus[addressSize - 1:0]);
     $display("Address Tag (Hex): %h",addressTag);
     $display("Byte Select (Decimal): %d",byteSelect);
     $display("Index (Decimal): %d", index);
@@ -167,6 +177,8 @@ module L2Cache(L1Bus, L1OperationBus, sharedBus, sharedOperationBus, snoopBus, h
 
       $display("Way: %d\tLRU Value: %d\tMESI status: %s", i, Storage[i][index].lru, mesiStatus);
     end
+
+    $display("\n");
   end
   endtask
 
