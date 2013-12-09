@@ -5,6 +5,7 @@
 module L2CacheTestBench();
   // Setup param for use in turning statistics on and off
   parameter stats = 0;
+  parameter display = 0;
   
   // Configurable params for the architecture used
   parameter commandSize = 8;
@@ -34,13 +35,13 @@ module L2CacheTestBench();
  
 
   // Instantiate our L2 cache
-  L2Cache #(.ways(ways), .indexBits(indexBits), .lineSize(lineSize), .tagBits(tagBits)) cache(.L1Bus(L1Bus), .snoopBus(snoopBus), .sharedBus(sharedBus), .L1OperationBus(L1OperationBus), .sharedOperationBus(sharedOperationBus), .hit(hit), .miss(miss), .read(read), .write(write));
+  L2Cache #(.display(display), .ways(ways), .indexBits(indexBits), .lineSize(lineSize), .tagBits(tagBits)) cache(.L1Bus(L1Bus), .snoopBus(snoopBus), .sharedBus(sharedBus), .L1OperationBus(L1OperationBus), .sharedOperationBus(sharedOperationBus), .hit(hit), .miss(miss), .read(read), .write(write));
 
   // Instantiate GetSnoopResult
   GetSnoopResult #(.lineSize(lineSize)) snoop(.sharedBus(sharedBus), .sharedOperationBus(sharedOperationBus), .snoopBus(snoopBus));
 
   // Instantiate fileIO module
-  FileIO #(addressSize) IO(.L1Bus(L1Bus), .sharedBus(sharedBus), .L1OperationBus(L1OperationBus), .sharedOperationBus(sharedOperationBus));
+  FileIO #(.display(display), .addressSize(addressSize)) IO(.L1Bus(L1Bus), .sharedBus(sharedBus), .L1OperationBus(L1OperationBus), .sharedOperationBus(sharedOperationBus));
   
   // Take statistics
   always @(hit,miss,read,write) begin
@@ -55,7 +56,7 @@ module L2CacheTestBench();
   end
 
   initial begin
-    if(stats == 1) begin
+    if(stats == 1 && display == 1) begin
       $monitor("Hit count:%d\tMiss count:%d\tRead count:%d\tWrite count:%d\tHit/Miss ratio:%d/%d", HIT, MISS, READ, WRITE, HIT,MISS);
     end
   end

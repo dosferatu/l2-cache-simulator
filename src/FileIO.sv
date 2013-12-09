@@ -2,6 +2,7 @@ module FileIO(L1Bus,L1OperationBus,sharedBus,sharedOperationBus);
   // Establish parameters for configurability
   parameter addressSize = 32;
   parameter commandSize = 32;
+  parameter display = 0;
   
   // Define inputs and outputs
   inout logic [255:0]   L1Bus;
@@ -41,7 +42,8 @@ module FileIO(L1Bus,L1OperationBus,sharedBus,sharedOperationBus);
       case(command)
         0:  begin
               // L1 data cache read request
-              $display("L1 data cache read request to address %h", address);
+              if (display == 1)
+                $display("L1 data cache read request to address %h", address);
               L1Address       <= address;
               L1Operation     <= "DR";
               sharedAddress   <= 32'bz;
@@ -49,7 +51,8 @@ module FileIO(L1Bus,L1OperationBus,sharedBus,sharedOperationBus);
             end
         1:  begin
               // L1 data cache write request
-              $display("L1 data cache write request to address %h", address);
+              if (display == 1)
+                $display("L1 data cache write request to address %h", address);
               L1Address       <= address;
               L1Operation     <= "DW";
               sharedAddress   <= 32'bz;
@@ -57,7 +60,8 @@ module FileIO(L1Bus,L1OperationBus,sharedBus,sharedOperationBus);
             end
         2:  begin
               // L1 instruction cache read request
-              $display("L1 instruction cache read request to address %h", address);
+              if (display == 1)
+                $display("L1 instruction cache read request to address %h", address);
               L1Address       <= address;
               L1Operation     <= "IR";
               sharedAddress   <= 32'bz;
@@ -65,7 +69,8 @@ module FileIO(L1Bus,L1OperationBus,sharedBus,sharedOperationBus);
             end  
         3:  begin
               // Snooped invalidate command
-              $display("Snooped invalidate command to address %h", address);
+              if (display == 1)
+                $display("Snooped invalidate command to address %h", address);
               sharedAddress   <= address;
               sharedOperation <= "I";
               L1Address       <= 32'bz;
@@ -73,7 +78,8 @@ module FileIO(L1Bus,L1OperationBus,sharedBus,sharedOperationBus);
             end
         4:  begin
               // Snooped read request
-              $display("Snooped read request to address %h", address);
+              if (display == 1)
+                $display("Snooped read request to address %h", address);
               sharedAddress   <= address;
               sharedOperation <= "R";
               L1Address       <= 32'bz;
@@ -81,7 +87,8 @@ module FileIO(L1Bus,L1OperationBus,sharedBus,sharedOperationBus);
             end
         5:  begin
               // Snooped write request
-              $display("Snooped write request to address %h", address);
+              if (display == 1)
+                $display("Snooped write request to address %h", address);
               sharedAddress   <= address;
               sharedOperation <= "W";
               L1Address       <= 32'bz;
@@ -89,7 +96,8 @@ module FileIO(L1Bus,L1OperationBus,sharedBus,sharedOperationBus);
             end
         6:  begin
               // Snooped read with intent to modify
-              $display("Snooped read with intent to modify to address %h", address);
+              if (display == 1)
+                $display("Snooped read with intent to modify to address %h", address);
               sharedAddress   <= address;
               sharedOperation <= "M";
               L1Address       <= 32'bz;
@@ -97,11 +105,15 @@ module FileIO(L1Bus,L1OperationBus,sharedBus,sharedOperationBus);
             end
         8:  begin
               // Clear cache & reset all states
-              $display("Clear cache & reset all states");
+              if (display == 1)
+                $display("Clear cache & reset all states");
+              sharedOperation <= "CL";
             end
         9:  begin
               // Print contents and state of each valid
-              $display("Print contents and state of each valid");
+              if (display == 1)
+                $display("Print contents and state of each valid");
+              sharedOperation <= "PR";
             end
           // cache line (allow subsequent trace activity
       endcase
