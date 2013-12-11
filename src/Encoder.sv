@@ -17,11 +17,13 @@ module Encoder(in, out);
   input[ways - 1:0] in;
 
   // Take the base 2 log of the encoder input parameter
-  output [$clog2(ways) - 1:0] out;
+  output reg [$clog2(ways) - 1:0] out;
 
   // Give output according to log base 2 of the input
+  always @(in) begin
   if(in == 0)
-    assign out = 8'bx;
+    out = 8'bx;
   else
-    assign out = $clog2(in);
+    out = $clog2(in);
+  end
 endmodule

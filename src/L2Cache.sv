@@ -3,7 +3,7 @@
 //
 //**************************************************
 
-module L2Cache(L1BusIn, L1BusOut, L1OperationBusIn, sharedBusIn, sharedBusOut, sharedOperationBusIn, sharedOperationOut, snoopBusIn, snoopBusOut, hit, miss, read, write);
+module L2Cache(L1BusIn, L1BusOut, L1OperationBusIn, sharedBusIn, sharedBusOut, sharedOperationBusIn, sharedOperationBusOut, snoopBusIn, snoopBusOut, hit, miss, read, write);
 
 /*************************************************************************************************************/
 /*                                       This section establishes parameters                                 */
@@ -23,6 +23,9 @@ module L2Cache(L1BusIn, L1BusOut, L1OperationBusIn, sharedBusIn, sharedBusOut, s
   parameter E               = 2;    //
   parameter S               = 4;    //
   parameter I               = 8;    //  
+  parameter HIT             = 2'b01;
+  parameter HITM            = 2'b10;
+  parameter MISS            = 2'b00;
   parameter display         = 0;    // Set display flag
 
   // Declare inputs and outputs
@@ -42,6 +45,7 @@ module L2Cache(L1BusIn, L1BusOut, L1OperationBusIn, sharedBusIn, sharedBusOut, s
   output reg  [31:0]            write;
 
   // Establish regs/registers for use by the module
+  reg [addressSize - 1:0]    address;      // Reg to store current working address
   reg [tagBits - 1:0]        addressTag;   // Current operation's tag from address
   reg [byteSelectBits - 1:0] byteSelect;   // Current byte select value
   reg [lineSize - 1:0]       cacheData;    // Data from the cache line being operated on
@@ -128,14 +132,6 @@ module L2Cache(L1BusIn, L1BusOut, L1OperationBusIn, sharedBusIn, sharedBusOut, s
         .in5(Storage[5][L1BusIn[byteSelectBits + indexBits - 1:0]].cacheData),
         .in6(Storage[6][L1BusIn[byteSelectBits + indexBits - 1:0]].cacheData),
         .in7(Storage[7][L1BusIn[byteSelectBits + indexBits - 1:0]].cacheData),
-        .in8(0),
-        .in9(0),
-        .in10(0),
-        .in11(0),
-        .in12(0),
-        .in13(0),
-        .in14(0),
-        .in15(0),
         .out(MUX_OUT));
   endcase
 
@@ -150,81 +146,393 @@ module L2Cache(L1BusIn, L1BusOut, L1OperationBusIn, sharedBusIn, sharedBusOut, s
   always@(L1BusIn, L1OperationBusIn, sharedBusIn, sharedOperationBusIn) begin
 
     // Command 0
+    // Read request from L1 data cache
     if (L1OperationBusIn == "DR") begin
       // Update the cache
-      CheckForHit;
-      ReadL2Cache;
-      UpdateLRU;
+      CheckForHit(L1BusIn);
+      
+      if (hitFlag) begin
+        case (Storage[selectedWay][index].mesi)
+          M: begin
+            ReadL2Cache;
+            UpdateLRU;
+            Storage[selectedWay][index].mesi = M;
+            WriteL1;
+          end
+
+          E: begin
+            ReadL2Cache;
+            UpdateLRU;
+            Storage[selectedWay][index].mesi = E;
+            WriteL1;
+          end
+
+          S: begin
+            ReadL2Cache;
+            UpdateLRU;
+            Storage[selectedWay][index].mesi = S;
+            WriteL1;
+          end
+
+          I: begin
+            ReadSharedBus("R"); // Read
+            if (snoopBusIn == HIT || snoopBusIn == HITM) begin // HIT/HITM
+              WriteL2Cache;
+              UpdateLRU;
+              Storage[selectedWay][index].mesi = S;
+              WriteL1;
+            end
+
+            else if (snoopBusIn == MISS) begin // MISS
+              ReadSharedBus("M");  // RFO
+              WriteL2Cache;
+              UpdateLRU;
+              Storage[selectedWay][index].mesi = E;
+              WriteL1;
+            end
+          end
+        endcase
+      end
+
+      else if (~hitFlag) begin
+        ReadSharedBus("R"); // Read
+        if (snoopBusIn == HIT || snoopBusIn == HITM) begin // HIT/HITM
+          WriteL2Cache;
+          UpdateLRU;
+          Storage[selectedWay][index].mesi = S;
+          WriteL1;
+        end
+
+        else if (snoopBusIn == MISS) begin // MISS
+          ReadSharedBus("M"); // RFO
+          WriteL2Cache;
+          UpdateLRU;
+          Storage[selectedWay][index].mesi = E;
+          WriteL1;
+        end;
+      end
+
       if (display == 1)
         DisplayState(L1OperationBusIn);
     end
 
     // Command 1
-    else if (L1OperationBus == "DW") begin
+    // Write request from L1 data cache
+    else if (L1OperationBusIn == "DW") begin
       // Update the cache
-      CheckForHit;
-      WriteL2Cache;
-      UpdateLRU;
+      CheckForHit(L1BusIn);
+
+      if (hitFlag) begin
+        case (Storage[selectedWay][index].mesi)
+          M: begin
+            WriteL2Cache;
+            UpdateLRU;
+            Storage[selectedWay][index].mesi = M;
+          end
+
+          E: begin
+            SendInvalidate;
+            WriteL2Cache;
+            UpdateLRU;
+            Storage[selectedWay][index].mesi = M;
+          end
+
+          S: begin
+            SendInvalidate;
+            WriteL2Cache;
+            UpdateLRU;
+            Storage[selectedWay][index].mesi = M;
+          end
+
+          I: begin
+            ReadSharedBus("R"); // Read
+            case (snoopBusIn)
+              HIT: begin
+                WriteL2Cache;
+                UpdateLRU;
+                Storage[selectedWay][index].mesi = M;
+              end
+
+              HITM: begin
+                ReadSharedBus("M"); // RFO
+                WriteL2Cache;
+                UpdateLRU;
+                Storage[selectedWay][index].mesi = M;
+              end
+
+              MISS: begin
+                WriteL2Cache;
+                UpdateLRU;
+                Storage[selectedWay][index].mesi = M;
+              end
+            endcase
+          end
+        endcase
+      end
+
+      else if (~hitFlag) begin
+        ReadSharedBus("R"); // Read
+        case (snoopBusIn)
+          HIT: begin
+            WriteL2Cache;
+            UpdateLRU;
+            Storage[selectedWay][index].mesi = M;
+          end
+
+          HITM: begin
+            ReadSharedBus("M"); // RFO
+            WriteL2Cache;
+            UpdateLRU;
+            Storage[selectedWay][index].mesi = M;
+          end
+
+          MISS: begin
+            WriteL2Cache;
+            UpdateLRU;
+            Storage[selectedWay][index].mesi = M;
+          end
+        endcase
+      end
+
       if (display == 1)
-        DisplayState(L1OperationBus);
+        DisplayState(L1OperationBusIn);
     end
 
     // Command 2
-    else if (L1OperationBus == "IR") begin
+    // Read request from L1 instruction cache
+    else if (L1OperationBusIn == "IR") begin
       // Update the cache
-      CheckForHit;
-      ReadL2Cache;
-      UpdateLRU;
+      CheckForHit(L1BusIn);
+
+      if (hitFlag) begin
+        case (Storage[selectedWay][index].mesi)
+          M: begin
+            ReadL2Cache;
+            UpdateLRU;
+            Storage[selectedWay][index].mesi = M;
+            WriteL1;
+          end
+
+          E: begin
+            ReadL2Cache;
+            UpdateLRU;
+            Storage[selectedWay][index].mesi = E;
+            WriteL1;
+          end
+
+          S: begin
+            ReadL2Cache;
+            UpdateLRU;
+            Storage[selectedWay][index].mesi = S;
+            WriteL1;
+          end
+
+          I: begin
+            ReadSharedBus("R"); // Read
+            case (snoopBusIn)
+              HIT: begin
+                WriteL2Cache;
+                UpdateLRU;
+                Storage[selectedWay][index].mesi = S;
+                WriteL1;
+              end
+
+              HITM: begin
+                ReadSharedBus("M"); // RFO
+                WriteL2Cache;
+                UpdateLRU;
+                Storage[selectedWay][index].mesi = E;
+              end
+
+              MISS: begin
+                WriteL2Cache;
+                UpdateLRU;
+                Storage[selectedWay][index].mesi = E;
+                WriteL1;
+              end
+            endcase
+          end
+        endcase
+      end
+
+      else if (~hitFlag) begin
+        ReadSharedBus("R"); // Read
+        case (snoopBusIn)
+          HIT: begin
+            WriteL2Cache;
+            UpdateLRU;
+            Storage[selectedWay][index].mesi = S;
+          end
+
+          HITM: begin
+            WriteL2Cache;
+            UpdateLRU;
+            Storage[selectedWay][index].mesi = S;
+          end
+
+          MISS: begin
+            ReadSharedBus("R"); // Read
+            WriteL2Cache;
+            UpdateLRU;
+            Storage[selectedWay][index].mesi = E;
+            WriteL1;
+          end
+        endcase
+      end
+
       if (display == 1)
-        DisplayState(L1OperationBus);
+        DisplayState(L1OperationBusIn);
     end
 
     // Command 3
-    else if (sharedOperationBus == "I") begin
+    // Snooped invalidate command (another processor is modifying the data)
+    else if (sharedOperationBusIn == "I") begin
       // Update the cache
-      CheckForHit;
-      ReadL2Cache;
-      UpdateLRU;
+      CheckForHit(sharedBusIn);
+
+      if (hitFlag) begin
+        case (Storage[selectedWay][index].mesi)
+          M: begin
+            PutSnoopResult;
+            WriteSharedBus;
+            InvalidateL2;
+          end
+
+          E: begin
+            InvalidateL2;
+          end
+
+          S: begin
+            InvalidateL2;
+          end
+
+          I: begin
+          end
+        endcase
+      end
+
+      else if (~hitFlag) begin
+      end
+
       if (display == 1)
-        DisplayState(sharedOperationBus);
+        DisplayState(sharedOperationBusIn);
     end
 
     // Command 4
-    else if (sharedOperationBus == "R") begin
+    // Snooped read request (another processor is trying to read)
+    else if (sharedOperationBusIn == "R") begin
       // Update the cache
-      CheckForHit;
-      ReadL2Cache;
-      UpdateLRU;
+      CheckForHit(sharedBusIn);
+
+      if (hitFlag) begin
+        case (Storage[selectedWay][index].mesi)
+          M: begin
+            PutSnoopResult;
+            WriteSharedBus;
+            UpdateLRU;
+            Storage[selectedWay][index].mesi = S;
+          end
+
+          E: begin
+            PutSnoopResult;
+            UpdateLRU;
+            Storage[selectedWay][index].mesi = S;
+          end
+
+          S: begin
+            PutSnoopResult;
+            UpdateLRU;
+            Storage[selectedWay][index].mesi = S;
+          end
+
+          I: begin
+          end
+        endcase
+      end
+
+      else if (~hitFlag) begin
+        PutSnoopResult;
+      end
+
       if (display == 1)
-        DisplayState(sharedOperationBus);
+        DisplayState(sharedOperationBusIn);
     end
 
     // Command 5
-    else if (sharedOperationBus == "W") begin
+    // Snooped write request (another processor is trying to write)
+    else if (sharedOperationBusIn == "W") begin
       // Update the cache
-      CheckForHit;
-      ReadL2Cache;
-      UpdateLRU;
+      CheckForHit(sharedBusIn);
+
+      if (hitFlag) begin
+        case (Storage[selectedWay][index].mesi)
+          M: begin
+            PutSnoopResult;
+            WriteSharedBus;
+            Storage[selectedWay][index].mesi = I;
+          end
+
+          E: begin
+            Storage[selectedWay][index].mesi = I;
+          end
+
+          S: begin
+            Storage[selectedWay][index].mesi = I;
+          end
+
+          I: begin
+          end
+        endcase
+      end
+
+      else if (~hitFlag) begin
+      end
+
       if (display == 1)
-        DisplayState(sharedOperationBus);
+        DisplayState(sharedOperationBusIn);
     end
 
     // Command 6
-    else if (sharedOperationBus == "M") begin
+    // Snooped read with intent to modify (another processor has ownership and
+    // we are snooping
+    else if (sharedOperationBusIn == "M") begin
       // Update the cache
-      CheckForHit;
-      ReadL2Cache;
-      UpdateLRU;
+      CheckForHit(sharedBusIn);
+
+      if (hitFlag) begin
+        case (Storage[selectedWay][index].mesi)
+          M: begin
+            PutSnoopResult;
+            WriteSharedBus;
+            Storage[selectedWay][index].mesi = I;
+          end
+
+          E: begin
+            Storage[selectedWay][index].mesi = I;
+          end
+
+          S: begin
+            Storage[selectedWay][index].mesi = I;
+          end
+
+          I: begin
+          end
+        endcase
+      end
+
+      else if (~hitFlag) begin
+      end
+
       if (display == 1)
-        DisplayState(sharedOperationBus);
+        DisplayState(sharedOperationBusIn);
     end
 
     // Command 8
-    else if (L1OperationBus == "CL")
+    else if (L1OperationBusIn == "CL")
       ClearL2;
 
     // Command 9
-    else if (L1OperationBus == "PR") begin
+    else if (L1OperationBusIn == "PR") begin
       DisplayValid;
     end
   end
@@ -245,7 +553,7 @@ module L2Cache(L1BusIn, L1BusOut, L1OperationBusIn, sharedBusIn, sharedBusOut, s
     // Display all elements of the current operation
     $display("Command: %s", operation);
     $display("L1 Bus (Hex): %h", L1BusIn[addressSize - 1:0]);
-    $display("Shared Bus (Hex): %h", sharedBus[addressSize - 1:0]);
+    $display("Shared Bus (Hex): %h", sharedBusIn[addressSize - 1:0]);
     $display("Address Tag (Hex): %h",addressTag);
     $display("Byte Select (Decimal): %d",byteSelect);
     $display("Index (Decimal): %d", index);
@@ -278,14 +586,14 @@ module L2Cache(L1BusIn, L1BusOut, L1OperationBusIn, sharedBusIn, sharedBusOut, s
   /****************************************************************************/
 
   // Update the hit detection flag and set the selected way if necessary.
-  task CheckForHit; begin
-    input [lineSize - 1:0]  address;
+  task CheckForHit (input [lineSize - 1:0]  addressIn); begin
     automatic integer i;
     
     // Disect address
-    addressTag  <= address[addressSize - 1:byteSelectBits + indexBits];
-    byteSelect  <= address[byteSelectBits - 1:0];
-    index       <= address[byteSelectBits + indexBits - 1:byteSelectBits];
+    addressTag  <= addressIn[addressSize - 1:byteSelectBits + indexBits];
+    byteSelect  <= addressIn[byteSelectBits - 1:0];
+    index       <= addressIn[byteSelectBits + indexBits - 1:byteSelectBits];
+    address     <= addressIn[addressSize - 1:0];
     
     // Initialize hitFlag
     hitFlag = 0;
@@ -317,16 +625,16 @@ module L2Cache(L1BusIn, L1BusOut, L1OperationBusIn, sharedBusIn, sharedBusOut, s
       case(Storage[selectedWay][index].mesi)
         M: begin
           WriteSharedBus;
-          Storage[selectedWay][index].cachData = "W";
+          Storage[selectedWay][index].cacheData = "W";
         end
         
-        E: Storage[selectedWay][index].cachData = "W";
+        E: Storage[selectedWay][index].cacheData = "W";
 
-        S: Storage[selectedWay][index].cachData = "W";
+        S: Storage[selectedWay][index].cacheData = "W";
 
-        I: Storage[selectedWay][index].cachData = "W";
-      end
-    endcase
+        I: Storage[selectedWay][index].cacheData = "W";
+      endcase
+    end
   end
   endtask
   
@@ -335,13 +643,12 @@ module L2Cache(L1BusIn, L1BusOut, L1OperationBusIn, sharedBusIn, sharedBusOut, s
   task ReadL2Cache; begin
     read = read + 1;
     WriteL1;
+  end
   endtask
 
 /***************************************************************/
 
-  task ReadSharedBus; begin
-    input [7:0]   operation;
-    
+  task ReadSharedBus(input [7:0] operation); begin
     if(operation == "R") begin
       sharedOperationBusOut <= operation;
       sharedBusOut          <= address;
@@ -350,12 +657,12 @@ module L2Cache(L1BusIn, L1BusOut, L1OperationBusIn, sharedBusIn, sharedBusOut, s
       sharedOperationBusOut <= operation;
       sharedBusOut          <= address;
     end
+  end
   endtask
 
 /********************************************************************/
 
   task WriteSharedBus; begin
-    input [lineSize - 1:0] address;
     reg   [lineSize - 1:0] newAddress;
     
     assign newAddress = address & 6'b000000;
@@ -382,17 +689,15 @@ module L2Cache(L1BusIn, L1BusOut, L1OperationBusIn, sharedBusIn, sharedBusOut, s
 
   task SendInvalidate; begin
     sharedBusOut        <= L1BusIn & 5'b00000;
-    sharedOperationBus  <= "I";
+    sharedOperationBusOut  <= "I";
   end
   endtask
 
 /*********************************************************************/
 
   task InvalidateL2; begin
-    input [lineSize - 1:0]  address;
-    
     // Invalidate line
-    Storage[selectedWay][address[byteSelectBits + indexBits - 1:byteSelectBits].mesi = "I";
+    Storage[selectedWay][address[byteSelectBits + indexBits - 1:byteSelectBits]].mesi = "I";
     
     // Send L1 Bus address to invalidate     
     L1BusOut = address & 5'b00000;
@@ -428,7 +733,8 @@ module L2Cache(L1BusIn, L1BusOut, L1OperationBusIn, sharedBusIn, sharedBusOut, s
         $display("Way: %d \t Index: %h \t MESI: %b \t LRU: %d", i, j, Storage[i][j].mesi, Storage[i][j].lru);
       end
     end
-    endtask
+  end
+endtask
 
 /*********************************************************************/
 
@@ -474,11 +780,12 @@ module L2Cache(L1BusIn, L1BusOut, L1OperationBusIn, sharedBusIn, sharedBusOut, s
   task PutSnoopResult; begin
     if (hitFlag) begin
       case(Storage[selectedWay][index].mesi)
-        M: snoopBusout <= HITM;
+        M: snoopBusOut <= HITM;
         E: snoopBusOut <= HIT;
         S: snoopBusOut <= HIT;
         I: snoopBusOut <= MISS;
         default: snoopBusOut <= MISS;
+      endcase
     end
     else if(!hitFlag)
       snoopBusOut = MISS;

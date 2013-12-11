@@ -37,7 +37,7 @@ module L2CacheTestBench();
   wire [31:0] write;
 
   // Instantiate our L2 cache
-  L2Cache #(.display(display), .ways(ways), .indexBits(indexBits), .lineSize(lineSize), .tagBits(tagBits)) cache(.L1BusIn(L1BusIn), .L1BusOut(L1BusOut), .L1OperationBusIn(L1OperationBusIn), .snoopBus(snoopBus), .sharedBusIn(sharedBusIn), .sharedBusOut(sharedBusOut), .sharedOperationBusIn(sharedOperationBusIn), .sharedOperationBusOut(sharedOperationBusOut), .hit(hit), .miss(miss), .read(read), .write(write));
+  L2Cache #(.display(display), .ways(ways), .indexBits(indexBits), .lineSize(lineSize), .tagBits(tagBits)) cache(.L1BusIn(L1BusIn), .L1BusOut(L1BusOut), .L1OperationBusIn(L1OperationBusIn), .snoopBusIn(snoopBusIn), .snoopBusOut(snoopBusOut), .sharedBusIn(sharedBusIn), .sharedBusOut(sharedBusOut), .sharedOperationBusIn(sharedOperationBusIn), .sharedOperationBusOut(sharedOperationBusOut), .hit(hit), .miss(miss), .read(read), .write(write));
 
   // Instantiate GetSnoopResult
   GetSnoopResult #(.lineSize(lineSize)) snoop(.sharedBusOut(sharedBusOut), .sharedOperationBusOut(sharedOperationBusOut), .snoopBusIn(snoopBusIn));
@@ -45,8 +45,8 @@ module L2CacheTestBench();
   // Instantiate fileIO module
   FileIO #(.display(display), .addressSize(addressSize)) IO(.L1BusIn(L1BusIn), .sharedBusIn(sharedBusIn), .L1OperationBusIn(L1OperationBusIn), .sharedOperationBusIn(sharedOperationBusIn));
   
-  always @(L1OperationBus) begin
-    if (L1OperationBus == "PS")
+  always @(L1OperationBusIn) begin
+    if (L1OperationBusIn == "PS")
       $display("Hits: %d \t Misses: %d \t Reads: %d \t Writes: %d \t Hit/Miss ratio: %d / %d", hit, miss, read, write, hit, miss);
   end
 endmodule

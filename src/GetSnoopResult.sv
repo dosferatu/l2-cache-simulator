@@ -5,11 +5,11 @@ module GetSnoopResult(sharedBusOut,sharedOperationBusOut,snoopBusIn);
   // Establish inputs and outputs of the module
   input  [lineSize - 1:0]  sharedBusOut;
   input  [7:0]             sharedOperationBusOut;
-  output [1:0]             snoopBusIn;
+  output reg [1:0]         snoopBusIn;
 
   
   // Perform a consistant procedure
-  always @(sharedBusOut, sharedOperationBus) begin
+  always @(sharedBusOut, sharedOperationBusOut) begin
     if(sharedBusOut[3:0] == 4'h2 || sharedBusOut[3:0] == 4'h8) begin
       snoopBusIn <= 2'b01;
     end
