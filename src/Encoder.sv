@@ -12,12 +12,16 @@
 //**************************************************
 
 module Encoder(in, out);
-parameter ways = 8;
+  parameter ways = 8;
 
-input[ways - 1:0] in;
+  input[ways - 1:0] in;
 
-// Take the base 2 log of the encoder input parameter
-output [$clog2(ways) - 1:0] out;
+  // Take the base 2 log of the encoder input parameter
+  output [$clog2(ways) - 1:0] out;
 
-assign out = $clog2(in);
+  // Give output according to log base 2 of the input
+  if(in == 0)
+    assign out = 8'bx;
+  else
+    assign out = $clog2(in);
 endmodule
