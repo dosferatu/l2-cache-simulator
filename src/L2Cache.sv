@@ -122,7 +122,66 @@ module L2Cache(L1BusIn, L1BusOut, L1OperationBusIn, sharedBusIn, sharedBusOut, s
 
   // Wire up the cache data lines to the bus for the multiplexor input
   //  This is set up to allow as much as many as 16 ways
+  
+  reg [lineSize - 1:0] gnd;
+  initial begin
+	gnd = 0;
+	end
   case (ways)
+	1: Multiplexor #(ways)  multiplexor(.select(ENCODER_OUT),
+        .in0(Storage[0][L1BusIn[byteSelectBits + indexBits - 1:0]].cacheData),
+        .in1(gnd),
+        .in2(gnd),
+        .in3(gnd),
+        .in4(gnd),
+        .in5(gnd),
+        .in6(gnd),
+        .in7(gnd),
+		.in8(gnd),
+        .in9(gnd),
+        .in10(gnd),
+        .in11(gnd),
+        .in12(gnd),
+        .in13(gnd),
+        .in14(gnd),
+        .in15(gnd)
+        .out(MUX_OUT));
+	2: Multiplexor #(ways)  multiplexor(.select(ENCODER_OUT),
+        .in0(Storage[0][L1BusIn[byteSelectBits + indexBits - 1:0]].cacheData),
+        .in1(Storage[1][L1BusIn[byteSelectBits + indexBits - 1:0]].cacheData),
+        .in2(gnd),
+        .in3(gnd),
+        .in4(gnd),
+        .in5(gnd),
+        .in6(gnd),
+        .in7(gnd),
+		.in8(gnd),
+        .in9(gnd),
+        .in10(gnd),
+        .in11(gnd),
+        .in12(gnd),
+        .in13(gnd),
+        .in14(gnd),
+        .in15(gnd)
+        .out(MUX_OUT));
+	4: Multiplexor #(ways)  multiplexor(.select(ENCODER_OUT),
+        .in0(Storage[0][L1BusIn[byteSelectBits + indexBits - 1:0]].cacheData),
+        .in1(Storage[1][L1BusIn[byteSelectBits + indexBits - 1:0]].cacheData),
+        .in2(Storage[2][L1BusIn[byteSelectBits + indexBits - 1:0]].cacheData),
+        .in3(Storage[3][L1BusIn[byteSelectBits + indexBits - 1:0]].cacheData),
+        .in4(gnd),
+        .in5(gnd),
+        .in6(gnd),
+        .in7(gnd),
+		.in8(gnd),
+        .in9(gnd),
+        .in10(gnd),
+        .in11(gnd),
+        .in12(gnd),
+        .in13(gnd),
+        .in14(gnd),
+        .in15(gnd)
+        .out(MUX_OUT));
     8: Multiplexor #(ways)  multiplexor(.select(ENCODER_OUT),
         .in0(Storage[0][L1BusIn[byteSelectBits + indexBits - 1:0]].cacheData),
         .in1(Storage[1][L1BusIn[byteSelectBits + indexBits - 1:0]].cacheData),
@@ -132,6 +191,32 @@ module L2Cache(L1BusIn, L1BusOut, L1OperationBusIn, sharedBusIn, sharedBusOut, s
         .in5(Storage[5][L1BusIn[byteSelectBits + indexBits - 1:0]].cacheData),
         .in6(Storage[6][L1BusIn[byteSelectBits + indexBits - 1:0]].cacheData),
         .in7(Storage[7][L1BusIn[byteSelectBits + indexBits - 1:0]].cacheData),
+		.in8(gnd),
+        .in9(gnd),
+        .in10(gnd),
+        .in11(gnd),
+        .in12(gnd),
+        .in13(gnd),
+        .in14(gnd),
+        .in15(gnd)
+        .out(MUX_OUT));
+	16: Multiplexor #(ways)  multiplexor(.select(ENCODER_OUT),
+        .in0(Storage[0][L1BusIn[byteSelectBits + indexBits - 1:0]].cacheData),
+        .in1(Storage[1][L1BusIn[byteSelectBits + indexBits - 1:0]].cacheData),
+        .in2(Storage[2][L1BusIn[byteSelectBits + indexBits - 1:0]].cacheData),
+        .in3(Storage[3][L1BusIn[byteSelectBits + indexBits - 1:0]].cacheData),
+        .in4(Storage[4][L1BusIn[byteSelectBits + indexBits - 1:0]].cacheData),
+        .in5(Storage[5][L1BusIn[byteSelectBits + indexBits - 1:0]].cacheData),
+        .in6(Storage[6][L1BusIn[byteSelectBits + indexBits - 1:0]].cacheData),
+        .in7(Storage[7][L1BusIn[byteSelectBits + indexBits - 1:0]].cacheData),
+		.in8(Storage[8][L1BusIn[byteSelectBits + indexBits - 1:0]].cacheData),
+        .in9(Storage[9][L1BusIn[byteSelectBits + indexBits - 1:0]].cacheData),
+        .in10(Storage[10][L1BusIn[byteSelectBits + indexBits - 1:0]].cacheData),
+        .in11(Storage[11][L1BusIn[byteSelectBits + indexBits - 1:0]].cacheData),
+        .in12(Storage[12][L1BusIn[byteSelectBits + indexBits - 1:0]].cacheData),
+        .in13(Storage[13][L1BusIn[byteSelectBits + indexBits - 1:0]].cacheData),
+        .in14(Storage[14][L1BusIn[byteSelectBits + indexBits - 1:0]].cacheData),
+        .in15(Storage[15][L1BusIn[byteSelectBits + indexBits - 1:0]].cacheData),
         .out(MUX_OUT));
   endcase
 
