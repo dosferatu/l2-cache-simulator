@@ -18,11 +18,13 @@ module Comparator(addressTag, cacheTag, match);
   input[tagBits - 1:0] cacheTag;
   output reg match;
 
-  $display("Address tag: %h, Cache tag: %h", addressTag, cacheTag);
 
   // Run a comparison and output the result
   always @(addressTag, cacheTag) begin
     
+
+    $display("Address tag: %h, Cache tag: %h", addressTag, cacheTag);
+
     // If the addressTag and cacheTag are equal it is a match
     if (addressTag == cacheTag)
       match = 1;

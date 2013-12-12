@@ -45,16 +45,17 @@ module L2Cache(L1BusIn, L1BusOut, L1OperationBusIn, sharedBusIn, sharedBusOut, s
   output reg  [31:0]            write;
 
   // Establish regs/registers for use by the module
-  reg [addressSize - 1:0]    address;      // Reg to store current working address
-  reg [tagBits - 1:0]        addressTag;   // Current operation's tag from address
-  reg [byteSelectBits - 1:0] byteSelect;   // Current byte select value
-  reg [lineSize - 1:0]       cacheData;    // Data from the cache line being operated on
-  reg [tagBits - 1:0]        cacheTag;     // Tag from the cache line being operated on
-  reg                        hitFlag;      // Stores whether a hit has occurred or not
-  reg                        readFlag;     // Stores whether we are doing a read or a write operation
-  reg                        writeFlag;    // 
-  reg [indexBits - 1:0]      index;        // Currently selected set
-  reg [$clog2(ways) - 1:0]   selectedWay;  // Current operation's selected way according to LRU
+  reg  [lineSize - 1:0]       addressIn;    // Used for holding the address that came in but has not been dissected
+  wire [addressSize - 1:0]    address;      // Reg to store current working address
+  wire [tagBits - 1:0]        addressTag;   // Current operation's tag from address
+  wire [byteSelectBits - 1:0] byteSelect;   // Current byte select value
+  reg  [lineSize - 1:0]       cacheData;    // Data from the cache line being operated on
+  reg  [tagBits - 1:0]        cacheTag;     // Tag from the cache line being operated on
+  reg                         hitFlag;      // Stores whether a hit has occurred or not
+  reg                         readFlag;     // Stores whether we are doing a read or a write operation
+  reg                         writeFlag;    // 
+  reg [indexBits - 1:0]       index;        // Currently selected set
+  reg [$clog2(ways) - 1:0]    selectedWay;  // Current operation's selected way according to LRU
 
   wire [ways - 1:0]           COMPARATOR_OUT;       
   wire [$clog2(ways) - 1:0]   ENCODER_OUT;
@@ -68,7 +69,12 @@ module L2Cache(L1BusIn, L1BusOut, L1OperationBusIn, sharedBusIn, sharedBusOut, s
     write = 0;
   end
   
-  
+  always @(L1BusIn,sharedBusIn) begin
+    if(L1BusIn)
+      addressIn = L1BusIn;
+    else if(sharedBusIn)
+      addressIn = sharedBusIn;
+  end
   
 /*************************************************************************************************************/
 /*                                       This section establishes the cache                                  */
@@ -109,6 +115,9 @@ module L2Cache(L1BusIn, L1BusOut, L1OperationBusIn, sharedBusIn, sharedBusOut, s
 /*                                  and multiplexor that will be used to check for                           */
 /*                                    hits and get the data from the data cache                              */
 /*************************************************************************************************************/
+
+  // Dissect the address into the appropriate parts
+  addressDissector #(addressSize,byteSelectBits,indexBits,lineSize,tagBits) dissector(addressIn,address,addressTag,byteSelect,index);
 
   // Generate parameter "ways" amount of comparators
   genvar i;
@@ -675,11 +684,6 @@ module L2Cache(L1BusIn, L1BusOut, L1OperationBusIn, sharedBusIn, sharedBusOut, s
   task CheckForHit (input [lineSize - 1:0]  addressIn); begin
     automatic integer i;
     
-    // Disect address
-    addressTag  <= addressIn[addressSize - 1:byteSelectBits + indexBits];
-    byteSelect  <= addressIn[byteSelectBits - 1:0];
-    index       <= addressIn[byteSelectBits + indexBits - 1:byteSelectBits];
-    address     <= addressIn[addressSize - 1:0];
     
     // Initialize hitFlag
     hitFlag = 0;
