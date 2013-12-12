@@ -26,6 +26,8 @@ module L2Cache(L1BusIn, L1BusOut, L1OperationBusIn, sharedBusIn, sharedBusOut, s
   parameter HIT             = 2'b01;
   parameter HITM            = 2'b10;
   parameter MISS            = 2'b00;
+  parameter IS_L1_BUS       = 1;    // Flag indicating the hit check needs to keep statistics and set selected way
+  parameter IS_NOT_L1_BUS   = 0;    // Flag indicating the hit check does not keep stats or set selected way
   parameter display         = 0;    // Set display flag
 
   // Declare inputs and outputs
@@ -244,7 +246,7 @@ module L2Cache(L1BusIn, L1BusOut, L1OperationBusIn, sharedBusIn, sharedBusOut, s
     // Read request from L1 data cache
     if (L1OperationBusIn == "DR") begin
       // Update the cache
-      CheckForHit(L1BusIn);
+      CheckForHit(L1BusIn, IS_L1_BUS);
       
       if (hitFlag) begin
         case (Storage[selectedWay][index].mesi)
@@ -315,7 +317,7 @@ module L2Cache(L1BusIn, L1BusOut, L1OperationBusIn, sharedBusIn, sharedBusOut, s
     // Write request from L1 data cache
     else if (L1OperationBusIn == "DW") begin
       // Update the cache
-      CheckForHit(L1BusIn);
+      CheckForHit(L1BusIn, IS_L1_BUS);
 
       if (hitFlag) begin
         case (Storage[selectedWay][index].mesi)
@@ -397,7 +399,7 @@ module L2Cache(L1BusIn, L1BusOut, L1OperationBusIn, sharedBusIn, sharedBusOut, s
     // Read request from L1 instruction cache
     else if (L1OperationBusIn == "IR") begin
       // Update the cache
-      CheckForHit(L1BusIn);
+      CheckForHit(L1BusIn, IS_L1_BUS);
 
       if (hitFlag) begin
         case (Storage[selectedWay][index].mesi)
@@ -483,7 +485,7 @@ module L2Cache(L1BusIn, L1BusOut, L1OperationBusIn, sharedBusIn, sharedBusOut, s
     // Snooped invalidate command (another processor is modifying the data)
     else if (sharedOperationBusIn == "I") begin
       // Update the cache
-      CheckForHit(sharedBusIn);
+      CheckForHit(sharedBusIn, IS_NOT_L1_BUS);
 
       if (hitFlag) begin
         case (Storage[selectedWay][index].mesi)
@@ -517,7 +519,7 @@ module L2Cache(L1BusIn, L1BusOut, L1OperationBusIn, sharedBusIn, sharedBusOut, s
     // Snooped read request (another processor is trying to read)
     else if (sharedOperationBusIn == "R") begin
       // Update the cache
-      CheckForHit(sharedBusIn);
+      CheckForHit(sharedBusIn, IS_NOT_L1_BUS);
 
       if (hitFlag) begin
         case (Storage[selectedWay][index].mesi)
@@ -557,7 +559,7 @@ module L2Cache(L1BusIn, L1BusOut, L1OperationBusIn, sharedBusIn, sharedBusOut, s
     // Snooped write request (another processor is trying to write)
     else if (sharedOperationBusIn == "W") begin
       // Update the cache
-      CheckForHit(sharedBusIn);
+      CheckForHit(sharedBusIn, IS_NOT_L1_BUS);
 
       if (hitFlag) begin
         case (Storage[selectedWay][index].mesi)
@@ -592,7 +594,7 @@ module L2Cache(L1BusIn, L1BusOut, L1OperationBusIn, sharedBusIn, sharedBusOut, s
     // we are snooping
     else if (sharedOperationBusIn == "M") begin
       // Update the cache
-      CheckForHit(sharedBusIn);
+      CheckForHit(sharedBusIn, IS_NOT_L1_BUS);
 
       if (hitFlag) begin
         case (Storage[selectedWay][index].mesi)
@@ -681,9 +683,8 @@ module L2Cache(L1BusIn, L1BusOut, L1OperationBusIn, sharedBusIn, sharedBusOut, s
   /****************************************************************************/
 
   // Update the hit detection flag and set the selected way if necessary.
-  task CheckForHit (input [lineSize - 1:0]  addressIn); begin
+  task CheckForHit (input [lineSize - 1:0]  addressIn, input isL1); begin
     automatic integer i;
-    
     
     // Initialize hitFlag
     hitFlag = 0;
@@ -694,13 +695,17 @@ module L2Cache(L1BusIn, L1BusOut, L1OperationBusIn, sharedBusIn, sharedBusOut, s
       //$display("Hit: %h, Comparator: %h, Valid: %h", COMPARATOR_OUT[i] & ~Storage[i][index].mesi[3], COMPARATOR_OUT[i], ~Storage[i][index].mesi[3]);
     end
     
-    // Increment hits and misses
-    if (hitFlag) begin
-      hit         <= hit + 1;
-      selectedWay <= ENCODER_OUT; 
+    // Only run stats and set selected way if we are checking for the L1 bus
+    if (isL1) begin
+      // Increment hits and misses
+      if (hitFlag) begin
+        hit         <= hit + 1;
+        selectedWay <= ENCODER_OUT; 
+      end
+      else if (!hitFlag) begin
+        miss = miss + 1;
+      end
     end
-    else if (!hitFlag)
-      miss = miss + 1;
   end
   endtask
 
