@@ -25,6 +25,9 @@ module addressDissector (addressIn, address,addressTag,byteSelect,index);
     byteSelect  <= addressIn[byteSelectBits - 1:0];
     index       <= addressIn[byteSelectBits + indexBits - 1:byteSelectBits];
     address     <= addressIn[addressSize - 1:0];
+
+    $display("AD --> Address: %h \t Address Tag: %h",address,addressTag);
   end
+
 
 endmodule

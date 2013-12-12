@@ -125,7 +125,7 @@ module L2Cache(L1BusIn, L1BusOut, L1OperationBusIn, sharedBusIn, sharedBusOut, s
   genvar i;
   generate
     for (i = 0; i < ways; i = i + 1) begin: comp
-      Comparator #(tagBits) comparator(addressTag, Storage[i][L1BusIn[byteSelectBits + indexBits - 1:0]].cacheTag, COMPARATOR_OUT[i]);
+      Comparator #(addressSize,tagBits) comparator(address,addressTag, Storage[i][L1BusIn[byteSelectBits + indexBits - 1:0]].cacheTag, COMPARATOR_OUT[i]);
     end
   endgenerate
 
@@ -692,17 +692,20 @@ module L2Cache(L1BusIn, L1BusOut, L1OperationBusIn, sharedBusIn, sharedBusOut, s
     // Check for hit from comparator and the mesi bits of the ways
     for (i = 0; i < ways; i = i + 1) begin
       hitFlag = hitFlag | (COMPARATOR_OUT[i] & ~Storage[i][index].mesi[3]);
-      //$display("Hit: %h, Comparator: %h, Valid: %h", COMPARATOR_OUT[i] & ~Storage[i][index].mesi[3], COMPARATOR_OUT[i], ~Storage[i][index].mesi[3]);
+      if(COMPARATOR_OUT[i] == 1)
+        $display("Hit: %h, Comparator: %h, Valid: %h", hitFlag,COMPARATOR_OUT[i],~Storage[i][index].mesi[3]);
     end
     
-    // Only run stats and set selected way if we are checking for the L1 bus
-    if (isL1) begin
+    // Only run stats if we are checking for the L1 bus
       // Increment hits and misses
-      if (hitFlag) begin
-        hit         <= hit + 1;
-        selectedWay <= ENCODER_OUT; 
+    if (hitFlag) begin
+      if(isL1) begin
+        hit = hit + 1;
       end
-      else if (!hitFlag) begin
+      selectedWay = ENCODER_OUT; 
+    end
+    else if (!hitFlag) begin
+      if(isL1) begin
         miss = miss + 1;
       end
     end
@@ -714,30 +717,36 @@ module L2Cache(L1BusIn, L1BusOut, L1OperationBusIn, sharedBusIn, sharedBusOut, s
   task WriteL2Cache; begin
     write = write + 1;
 
-    if (hitFlag)
+    if (hitFlag) begin
       Storage[selectedWay][index].cacheData <= "W";
+      $display("Write --> Hit Way: %d \t AddressTag: %h \t Index: %h",selectedWay,addressTag,index);
+    end
     else if (!hitFlag) begin
       QueryLRU;
       case(Storage[selectedWay][index].mesi)
         M: begin
           WriteSharedBus;
-          Storage[selectedWay][index].cacheData = "W";
-          Storage[selectedWay][index].cacheTag = addressTag;
+          Storage[selectedWay][index].cacheData <= "W";
+          Storage[selectedWay][index].cacheTag <= addressTag;
+          $display("Write --> Miss Way: %d \t AddressTag: %h \t CacheTag: %h \t Index: %h",selectedWay,addressTag,Storage[selectedWay][index].cacheTag,index);
         end
 
         E: begin
-          Storage[selectedWay][index].cacheData = "W";
-          Storage[selectedWay][index].cacheTag = addressTag;
+          Storage[selectedWay][index].cacheData <= "W";
+          Storage[selectedWay][index].cacheTag <= addressTag;
+          $display("Write --> Miss Way: %d \t AddressTag: %h \t CacheTag: %h \t Index: %h",selectedWay,addressTag,Storage[selectedWay][index].cacheTag,index);
         end
 
         S: begin
-          Storage[selectedWay][index].cacheData = "W";
-          Storage[selectedWay][index].cacheTag = addressTag;
+          Storage[selectedWay][index].cacheData <= "W";
+          Storage[selectedWay][index].cacheTag <= addressTag;
+          $display("Write --> Miss Way: %d \t AddressTag: %h \t CacheTag: %h \t Index: %h",selectedWay,addressTag,Storage[selectedWay][index].cacheTag,index);
         end
 
         I: begin
-          Storage[selectedWay][index].cacheData = "W";
-          Storage[selectedWay][index].cacheTag = addressTag;
+          Storage[selectedWay][index].cacheData <= "W";
+          Storage[selectedWay][index].cacheTag <= addressTag;
+          $display("Write --> Miss Way: %d \t AddressTag: %h \t CacheTag: %h \t Index: %h",selectedWay,addressTag,Storage[selectedWay][index].cacheTag,index);
         end
       endcase
     end

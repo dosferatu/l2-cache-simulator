@@ -24,8 +24,8 @@ module FileIO(L1BusIn,L1OperationBusIn,sharedBusIn, sharedOperationBusIn);
     file = $fopen("cc1.din", "r");
 
     while(!$feof(file)) begin
-      #100 line = $fscanf(file, "%h %h", command, address);
-      #10  command = 32'bz; address = 32'bz;
+      #1000 line = $fscanf(file, "%h %h", command, address);
+      #1000  command = 32'bz; address = 32'bz;
     end
     L1OperationBusIn = "PS"; // Print stats
   end

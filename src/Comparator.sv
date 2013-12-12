@@ -1,5 +1,5 @@
 //**************************************************
-// Comparator
+//  Comparator
 //
 // Inputs: Both the address and the cache tag which
 // are the width of the "tagBits" parameter.
@@ -8,19 +8,20 @@
 // comparison of both inputs.
 //**************************************************
 
-module Comparator(addressTag, cacheTag, match);
+module Comparator(address, addressTag, cacheTag, match);
   // Establish parameters for configurability
-  
+  parameter addressSize = 32;
   parameter tagBits = 12;
 
   // Define inputs and outputs of the module
+  input[addressSize - 1:0] address;
   input[tagBits - 1:0] addressTag;
   input[tagBits - 1:0] cacheTag;
   output reg match;
 
 
   // Run a comparison and output the result
-  always @(addressTag, cacheTag) begin
+  always @(address) begin
     
     // If the addressTag and cacheTag are equal it is a match
     if (addressTag == cacheTag)
@@ -28,5 +29,7 @@ module Comparator(addressTag, cacheTag, match);
     // If not a match
     else
       match = 0;
+  
+   $display("Comp --> Address Tag: %h \t Cache Tag: %h",addressTag,cacheTag);
   end
 endmodule
