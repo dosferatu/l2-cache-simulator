@@ -9,6 +9,8 @@
 //**************************************************
 
 module Comparator(address, addressTag, cacheTag, match);
+  parameter display = 0;
+
   // Establish parameters for configurability
   parameter addressSize = 32;
   parameter tagBits = 12;
@@ -24,12 +26,17 @@ module Comparator(address, addressTag, cacheTag, match);
   always @(address) begin
     
     // If the addressTag and cacheTag are equal it is a match
-    if (addressTag == cacheTag)
+    if (addressTag == cacheTag) begin
       match = 1;
+    end
+
     // If not a match
-    else
+    else begin
       match = 0;
+    end
   
-   $display("Comp --> Address Tag: %h \t Cache Tag: %h",addressTag,cacheTag);
+    if (display) begin
+      $display("Comp --> Address Tag: %h \t Cache Tag: %h",addressTag,cacheTag);
+    end
   end
 endmodule

@@ -21,9 +21,12 @@ module Encoder(in, out);
 
   // Give output according to log base 2 of the input
   always @(in) begin
-  if(in == 0)
-    out = 8'bx;
-  else
-    out = $clog2(in);
+    if(in == 0) begin
+      out = 8'bx;
+    end
+
+    else begin
+      out = $clog2(in);
+    end
   end
 endmodule

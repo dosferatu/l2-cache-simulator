@@ -1,4 +1,6 @@
 module addressDissector (addressIn, address,addressTag,byteSelect,index);
+  parameter display = 0;
+
   // Establish parameters for configurability
   parameter addressSize     = 32;
   parameter byteSelectBits  = 6;
@@ -26,8 +28,8 @@ module addressDissector (addressIn, address,addressTag,byteSelect,index);
     index       <= addressIn[byteSelectBits + indexBits - 1:byteSelectBits];
     address     <= addressIn[addressSize - 1:0];
 
-    $display("AD --> Address: %h \t Address Tag: %h",address,addressTag);
+    if (display) begin
+      $display("AD --> Address: %h \t Address Tag: %h",address,addressTag);
+    end 
   end
-
-
 endmodule
