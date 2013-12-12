@@ -28,7 +28,7 @@ module L2Cache(L1BusIn, L1BusOut, L1OperationBusIn, sharedBusIn, sharedBusOut, s
   parameter MISS            = 2'b00;
   parameter IS_L1_BUS       = 1;    // Flag indicating the hit check needs to keep statistics and set selected way
   parameter IS_NOT_L1_BUS   = 0;    // Flag indicating the hit check does not keep stats or set selected way
-  parameter display         = 0;    // Set display flag
+  parameter display         = 1;    // Set display flag
 
   // Declare inputs and outputs
   input       [lineSize - 1:0]  sharedBusIn;
@@ -125,7 +125,7 @@ module L2Cache(L1BusIn, L1BusOut, L1OperationBusIn, sharedBusIn, sharedBusOut, s
   genvar i;
   generate
     for (i = 0; i < ways; i = i + 1) begin: comp
-      Comparator #(addressSize,tagBits) comparator(address,addressTag, Storage[i][L1BusIn[byteSelectBits + indexBits - 1:0]].cacheTag, COMPARATOR_OUT[i]);
+      Comparator #(addressSize,tagBits) comparator(address,addressTag, Storage[i][index].cacheTag, COMPARATOR_OUT[i]);
     end
   endgenerate
 
@@ -693,7 +693,7 @@ module L2Cache(L1BusIn, L1BusOut, L1OperationBusIn, sharedBusIn, sharedBusOut, s
     for (i = 0; i < ways; i = i + 1) begin
       hitFlag = hitFlag | (COMPARATOR_OUT[i] & ~Storage[i][index].mesi[3]);
       if(COMPARATOR_OUT[i] == 1)
-        $display("Hit: %h, Comparator: %h, Valid: %h", hitFlag,COMPARATOR_OUT[i],~Storage[i][index].mesi[3]);
+        $display("CheckHit --> Hit: %h, Comparator: %h, Valid: %h", hitFlag,COMPARATOR_OUT[i],~Storage[i][index].mesi[3]);
     end
     
     // Only run stats if we are checking for the L1 bus
@@ -758,6 +758,8 @@ module L2Cache(L1BusIn, L1BusOut, L1OperationBusIn, sharedBusIn, sharedBusOut, s
   task ReadL2Cache; begin
     read = read + 1;
     WriteL1;
+    if(display == 1)
+      $display("Read --> Address: %h \t CacheTag: %h",address,Storage[selectedWay][index].cacheTag);
   end
   endtask
 
@@ -765,10 +767,14 @@ module L2Cache(L1BusIn, L1BusOut, L1OperationBusIn, sharedBusIn, sharedBusOut, s
 
   task ReadSharedBus(input [7:0] operation); begin
     if(operation == "R") begin
+      if(display == 1)
+        $display("ReadShared --> Address: %h \t Operation: R",address);
       sharedOperationBusOut <= operation;
       sharedBusOut          <= address;
     end
     else if(operation == "M") begin
+      if(display == 1)
+        $display("ReadShared --> Address: %h \t Operation: M",address);
       sharedOperationBusOut <= operation;
       sharedBusOut          <= address;
     end
@@ -781,6 +787,8 @@ module L2Cache(L1BusIn, L1BusOut, L1OperationBusIn, sharedBusIn, sharedBusOut, s
     reg   [lineSize - 1:0] newAddress;
     
     assign newAddress = address & 6'b000000;
+    if(display == 1)
+      $display("WriteShared --> Address: %h \t Operation: W",newAddress);
     sharedBusOut          <= newAddress;
     sharedOperationBusOut <= "W";
   end
@@ -789,14 +797,26 @@ module L2Cache(L1BusIn, L1BusOut, L1OperationBusIn, sharedBusIn, sharedBusOut, s
 /*********************************************************************/
 
   task WriteL1; begin
-    if (sharedOperationBusIn == "I")
+    if (sharedOperationBusIn == "I") begin
       L1BusOut <= sharedBusIn & 5'b00000;
-    else if (L1OperationBusIn == "DR")
+      if(display == 1)
+        $display("WriteL1 --> Address: %h \t Operation: I",L1BusOut);
+    end
+    else if (L1OperationBusIn == "DR") begin
       L1BusOut <= "L1DR";
-    else if (L1OperationBusIn == "DW")
+      if(display == 1)
+        $display("WriteL1 --> Address: %h \t Operation: DR",L1BusOut);
+    end
+    else if (L1OperationBusIn == "DW") begin
       L1BusOut <= "L1DW";
-    else
+     if(display == 1)
+        $display("WriteL1 --> Address: %h \t Operation: DW",L1BusOut);
+    end
+    else begin
       L1BusOut <= "L1IR";
+      if(display == 1)
+        $display("WriteL1 --> Address: %h \t Operation: IR",L1BusOut);
+    end
   end
   endtask
 
@@ -805,6 +825,10 @@ module L2Cache(L1BusIn, L1BusOut, L1OperationBusIn, sharedBusIn, sharedBusOut, s
   task SendInvalidate; begin
     sharedBusOut        <= L1BusIn & 5'b00000;
     sharedOperationBusOut  <= "I";
+
+    if(display == 1)
+        $display("SharedInvalidate --> Address: %h \t Operation: %h",sharedBusOut,sharedOperationBusOut);
+
   end
   endtask
 
@@ -893,6 +917,9 @@ endtask
 /*********************************************************************/
 
   task PutSnoopResult; begin
+    if(display == 1)
+      $display("PutSnoopResult");
+
     if (hitFlag) begin
       case(Storage[selectedWay][index].mesi)
         M: snoopBusOut <= HITM;
