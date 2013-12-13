@@ -885,13 +885,20 @@ module L2Cache(L1BusIn, L1BusOut, L1OperationBusIn, sharedBusIn, sharedBusOut, s
   task DisplayValid; begin
     automatic integer i,j;
     automatic integer sets = 2**indexBits;
+
+    $display("Dumping cache contents for valid lines...");
     
-    for (i = 0; i < ways; i = i + 1) begin
-      for (j = 0; j < sets; j = j + 1) begin
-        if(Storage[i][j].mesi != I);
-        $display("Way: %d \t Index: %h \t MESI: %b \t LRU: %d", i, j, Storage[i][j].mesi, Storage[i][j].lru);
+    for (i = 0; i < sets; i = i + 1) begin
+      for (j = 0; j < ways; j = j + 1) begin
+        if(Storage[j][i].mesi != I) begin
+          $display("Way: %d   Index: %h   Tag: %h   MESI: %b   LRU: %d", j, i, Storage[j][i].cacheTag, Storage[j][i].mesi, Storage[j][i].lru);
+        end
       end
     end
+
+    $display("End of cache dump.");
+    $display();
+    $display();
   end
 endtask
 

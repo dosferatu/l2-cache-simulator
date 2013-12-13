@@ -21,7 +21,7 @@ module FileIO(L1BusIn,L1OperationBusIn,sharedBusIn, sharedOperationBusIn);
   // Begin File IO -> Bus procedure
   initial begin
     // Open the trace file and start parsing in each line
-    file = $fopen("cc1.din", "r");
+    file = $fopen("FinalProjectTestCasesClean", "r");
 
     while(!$feof(file)) begin
       #1000 line = $fscanf(file, "%h %h", command, address);
@@ -97,15 +97,25 @@ module FileIO(L1BusIn,L1OperationBusIn,sharedBusIn, sharedOperationBusIn);
             end
         8:  begin
               // Clear cache & reset all states
-              if (display == 1)
+              if (display == 1) begin
                 $display("Clear cache & reset all states");
-              sharedOperationBusIn <= "CL";
+              end
+
+              sharedBusIn           <= 32'bz;
+              sharedOperationBusIn  <= 8'bz;
+              L1BusIn               <= address;
+              L1OperationBusIn      <= "CL";
             end
         9:  begin
               // Print contents and state of each valid
-              if (display == 1)
+              if (display == 1) begin
                 $display("Print contents and state of each valid");
-              sharedOperationBusIn <= "PR";
+              end 
+
+              sharedBusIn           <= 32'bz;
+              sharedOperationBusIn  <= 8'bz;
+              L1BusIn               <= address;
+              L1OperationBusIn      <= "PR";
             end
         default: begin
           sharedBusIn           <= address;
